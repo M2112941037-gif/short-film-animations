@@ -22,18 +22,56 @@ const SCARF_SH = '#6e171c';
 const poly = (pts: Pt[]) => `M${pts.map(([x, y]) => `${x},${y}`).join(' L')}Z`;
 const soft = (pts: Pt[]) => smooth(pts, true, 0.4);
 
+// A soft lock of hair: a tapered, curved leaf from `root` to `tip`,
+// bowing sideways by `bend` (px). Messy hair = many of these, overlapping.
+const lock = (root: Pt, tip: Pt, w: number, bend: number): string => {
+  const dx = tip[0] - root[0], dy = tip[1] - root[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const at = (t: number, off: number): Pt => [root[0] + dx * t + nx * (off + bend * Math.sin(Math.PI * t)), root[1] + dy * t + ny * (off + bend * Math.sin(Math.PI * t))];
+  return smooth([at(0, -w / 2), at(0.35, -w * 0.45), at(0.7, -w * 0.25), tip, at(0.7, w * 0.2), at(0.35, w * 0.45), at(0, w / 2)], true, 0.5);
+};
+
+// Proportions follow the classic head: eyes on the half-way line, one eye's
+// width between them, nose base half-way from eyes to chin, mouth a third
+// of the way from nose to chin, ears from brow to nose base. Turned ~25°:
+// the midline sits a little left of centre and the far eye is only slightly
+// narrower than the near one.
 export const HarryPaint: React.FC<{id?: string}> = ({id = 'hp'}) => {
+  const mid = 186; // midline x at eye level
+  const eyeY = 200;
   const face: Pt[] = [
-    [172, 84], [224, 80], [260, 98], [282, 136], [288, 178], [284, 216], [272, 250], [254, 276], [228, 296], [200, 306], [174, 304],
-    [155, 293], [143, 276], [136, 256], [132, 234], [129, 210], [130, 188], [129, 168], [133, 146], [143, 120], [156, 98],
+    [168, 92], [214, 86], [252, 100], [274, 132], [282, 172], [281, 210], [274, 244], [260, 272], [236, 294], [206, 306], [182, 306],
+    [160, 296], [146, 278], [138, 252], [134, 222], [134, 192], [137, 162], [145, 132], [154, 108],
   ];
+  const far = {x: 157, w: 26};
+  const near = {x: 216, w: 30};
+  const eye = (cx: number, w: number, key: string) => {
+    const h = 13;
+    const white: Pt[] = [[cx - w / 2, eyeY + 1], [cx - w * 0.2, eyeY - h * 0.5], [cx + w * 0.25, eyeY - h * 0.5], [cx + w / 2, eyeY], [cx + w * 0.15, eyeY + h * 0.42], [cx - w * 0.25, eyeY + h * 0.4]];
+    const ir = w * 0.34;
+    const ix = cx - w * 0.06; // both looking a touch to their left, where the others stand
+    return (
+      <g key={key}>
+        <path d={soft(white)} fill="#f3eee7" />
+        <circle cx={ix} cy={eyeY} r={ir} fill={C.harryGreen} />
+        <path d={`M${ix - ir},${eyeY} A${ir},${ir} 0 0 0 ${ix + ir},${eyeY} Z`} fill="#2f8a57" />
+        <circle cx={ix} cy={eyeY + 0.5} r={ir * 0.45} fill={DARK} />
+        <circle cx={ix - ir * 0.4} cy={eyeY - ir * 0.45} r={ir * 0.3} fill="#fff" />
+        <circle cx={ix + ir * 0.35} cy={eyeY + ir * 0.45} r={ir * 0.12} fill="#fff" opacity={0.8} />
+        {/* upper lid: a tapered dark shape, thicker at the outer corner */}
+        <path d={soft([[cx - w / 2 - 1, eyeY + 2], [cx - w * 0.2, eyeY - h * 0.56], [cx + w * 0.25, eyeY - h * 0.58], [cx + w / 2 + 2, eyeY - 1], [cx + w / 2 - 1, eyeY + 2], [cx + w * 0.22, eyeY - h * 0.38], [cx - w * 0.2, eyeY - h * 0.36], [cx - w / 2 + 1, eyeY + 3]])} fill={DARK} />
+        <path d={soft([[cx - w * 0.3, eyeY + h * 0.46], [cx + w * 0.2, eyeY + h * 0.48], [cx + w * 0.1, eyeY + h * 0.62], [cx - w * 0.25, eyeY + h * 0.58]])} fill={SKIN_SH} opacity={0.6} />
+      </g>
+    );
+  };
   return (
     <g>
       <defs>
         <linearGradient id={`${id}-fall`} x1="0.15" y1="0.1" x2="0.85" y2="0.9">
           <stop offset="0" stopColor="#0a0f1c" stopOpacity="0" />
-          <stop offset="0.55" stopColor="#0a0f1c" stopOpacity="0.25" />
-          <stop offset="1" stopColor="#05070d" stopOpacity="0.7" />
+          <stop offset="0.55" stopColor="#0a0f1c" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#05070d" stopOpacity="0.65" />
         </linearGradient>
       </defs>
 
@@ -42,76 +80,67 @@ export const HarryPaint: React.FC<{id?: string}> = ({id = 'hp'}) => {
       <path d={poly([[236, 374], [300, 372], [352, 392], [398, 432], [424, 520], [262, 520], [270, 450]])} fill={COAT_SH} />
       <path d={poly([[60, 404], [118, 382], [132, 430], [118, 520], [70, 520]])} fill="#34416a" opacity={0.7} />
 
-      {/* neck: mostly in the jaw's shadow */}
-      <path d={soft([[208, 294], [256, 264], [266, 318], [274, 356], [212, 366], [204, 330]])} fill={SKIN_MID} />
-      <path d={poly([[208, 294], [258, 262], [264, 304], [236, 322], [210, 318]])} fill={SKIN_SH} />
+      {/* neck, shadowed under the jaw */}
+      <path d={soft([[200, 296], [250, 270], [262, 320], [270, 358], [206, 366], [198, 330]])} fill={SKIN_MID} />
+      <path d={poly([[200, 298], [252, 268], [258, 306], [230, 322], [202, 318]])} fill={SKIN_SH} />
 
-      {/* face: base, then planes */}
+      {/* ears, between brow and nose base */}
+      <path d={soft([[268, 186], [286, 190], [294, 214], [288, 240], [270, 246], [274, 214]])} fill={SKIN_MID} />
+      <path d={soft([[276, 200], [286, 208], [284, 230], [276, 234], [279, 214]])} fill={SKIN_SH} />
+
+      {/* face: base, a clean shadow plane, a half-tone between */}
       <path d={soft(face)} fill={SKIN} />
-      {/* big shadow plane on the far-from-light side of the head */}
-      <path d={poly([[244, 92], [276, 128], [288, 178], [284, 216], [272, 250], [254, 276], [228, 296], [206, 304], [226, 272], [240, 238], [246, 198], [242, 152], [232, 118]])} fill={SKIN_SH} />
-      {/* half-tone between light and shadow */}
-      <path d={poly([[232, 118], [242, 152], [246, 198], [240, 238], [226, 272], [212, 290], [218, 252], [226, 212], [228, 170], [222, 132]])} fill={SKIN_MID} />
-      {/* eye socket and brow shadow */}
-      <path d={poly([[178, 180], [198, 172], [230, 176], [238, 190], [226, 186], [200, 184], [182, 190]])} fill={SKIN_MID} />
-      <path d={poly([[134, 180], [150, 176], [166, 180], [168, 190], [152, 186], [136, 190]])} fill={SKIN_MID} />
-      {/* nose: a lit wedge with its shadow side toward us, cast shadow below */}
-      <path d={poly([[174, 190], [184, 222], [174, 244], [158, 248], [164, 236], [170, 214]])} fill={SKIN_MID} />
-      <path d={poly([[176, 222], [182, 234], [174, 246], [166, 246]])} fill={SKIN_SH} />
-      <path d={poly([[148, 250], [174, 248], [180, 256], [156, 258]])} fill={SKIN_SH} />
-      <path d={poly([[150, 238], [160, 234], [164, 242], [154, 246]])} fill="#f6e2cf" />
-      {/* warm bounce on the cheek, cool shadow under the lip and chin */}
-      <path d={soft([[150, 222], [178, 214], [200, 226], [186, 244], [158, 246]])} fill={WARM} opacity={0.35} />
-      <path d={poly([[158, 278], [186, 278], [180, 288], [164, 288]])} fill={SKIN_SH} opacity={0.8} />
-      <path d={poly([[160, 300], [200, 306], [228, 296], [214, 312], [178, 314]])} fill={SKIN_SH} />
-      {/* mouth: a shape, not a line — lips pressed, corners down */}
-      <path d={poly([[148, 268], [160, 266], [174, 267], [190, 271], [176, 273], [160, 272]])} fill="#6b3d3d" />
-      <path d={poly([[156, 274], [178, 275], [172, 280], [160, 279]])} fill="#c9887c" opacity={0.7} />
-      {/* ear */}
-      <path d={soft([[266, 186], [286, 190], [294, 212], [286, 236], [266, 240], [272, 212]])} fill={SKIN_MID} />
-      <path d={poly([[276, 200], [286, 206], [284, 226], [276, 230], [280, 214]])} fill={SKIN_SH} />
+      <path d={soft([[238, 96], [268, 124], [280, 170], [280, 210], [273, 244], [258, 272], [234, 294], [212, 304], [232, 270], [244, 232], [248, 190], [244, 146], [232, 114]])} fill={SKIN_SH} />
+      <path d={soft([[228, 112], [240, 146], [244, 190], [240, 232], [228, 266], [214, 290], [220, 250], [228, 206], [228, 164], [222, 128]])} fill={SKIN_MID} />
+      {/* brow ridge and eye sockets, softly */}
+      <path d={soft([[142, 186], [160, 180], [176, 186], [174, 194], [158, 190], [144, 194]])} fill={SKIN_MID} opacity={0.8} />
+      <path d={soft([[198, 186], [218, 178], [238, 184], [236, 194], [216, 190], [200, 194]])} fill={SKIN_MID} opacity={0.8} />
+      {/* nose on the midline: lit bridge, shadow toward us, a small cast shadow */}
+      <path d={soft([[mid + 4, 206], [mid + 12, 236], [mid + 8, 250], [mid - 4, 252], [mid + 2, 236]])} fill={SKIN_MID} />
+      <path d={soft([[mid + 6, 238], [mid + 13, 246], [mid + 6, 253], [mid, 252]])} fill={SKIN_SH} />
+      <path d={soft([[mid - 12, 254], [mid + 6, 253], [mid + 10, 259], [mid - 8, 260]])} fill={SKIN_SH} opacity={0.8} />
+      <path d={soft([[mid - 8, 244], [mid - 1, 241], [mid + 1, 247], [mid - 6, 249]])} fill="#f7e6d4" opacity={0.9} />
+      {/* warm cheeks, very light */}
+      <ellipse cx={162} cy={236} rx={15} ry={9} fill={WARM} opacity={0.18} />
+      <ellipse cx={228} cy={238} rx={14} ry={8} fill={WARM} opacity={0.14} />
+      {/* mouth, a third of the way from nose to chin: small, lips pressed */}
+      <path d={soft([[mid - 16, 272], [mid - 5, 269.5], [mid + 2, 271], [mid + 9, 269.5], [mid + 20, 272.5], [mid + 4, 275], [mid - 8, 274.5]])} fill="#7a4644" />
+      <path d={soft([[mid - 10, 277], [mid + 12, 277], [mid + 6, 283], [mid - 6, 283]])} fill="#d9998b" opacity={0.55} />
+      <path d={soft([[mid - 10, 285], [mid + 14, 285], [mid + 6, 290], [mid - 6, 290]])} fill={SKIN_MID} opacity={0.6} />
+      <path d={soft([[168, 300], [206, 306], [232, 296], [218, 312], [186, 314]])} fill={SKIN_SH} />
 
-      {/* eyes: a little larger than life — the far one foreshortened */}
-      <path d={soft([[138, 196], [148, 186], [162, 188], [160, 200], [146, 203]])} fill="#f1ece4" />
-      <ellipse cx={151} cy={195} rx={4.6} ry={6.2} fill={C.harryGreen} />
-      <ellipse cx={151} cy={195} rx={2.1} ry={2.9} fill={DARK} />
-      <path d={poly([[136, 194], [146, 184], [164, 186], [163, 190], [147, 189], [138, 197]])} fill={DARK} />
-      <path d={soft([[180, 198], [194, 184], [214, 181], [234, 192], [220, 207], [196, 208]])} fill="#f4efe8" />
-      <circle cx={208} cy={195} r={11.5} fill={C.harryGreen} />
-      <path d={`M${197},${195} A11.5,11.5 0 0 0 ${219},${195} Z`} fill="#2e8a55" />
-      <circle cx={208.5} cy={196} r={4.8} fill={DARK} />
-      <circle cx={203} cy={190} r={3} fill="#fff" />
-      <circle cx={214} cy={201} r={1.3} fill="#fff" opacity={0.8} />
-      {/* upper lid as a heavy dark shape, the way a painter would block it */}
-      <path d={poly([[178, 198], [192, 182], [214, 177], [238, 190], [236, 195], [214, 184], [194, 187], [182, 200]])} fill={DARK} />
-      <path d={poly([[190, 207], [210, 209], [226, 203], [222, 207], [208, 212], [192, 210]])} fill={SKIN_SH} opacity={0.8} />
-      {/* brows: blocky, inner ends lifted */}
-      <path d={poly([[134, 176], [148, 168], [164, 166], [162, 172], [148, 174], [136, 180]])} fill={HAIR} />
-      <path d={poly([[180, 168], [198, 160], [220, 162], [240, 172], [236, 176], [218, 168], [198, 167], [182, 174]])} fill={HAIR} />
-      {/* the scar */}
-      <path d={poly([[200, 112], [190, 128], [198, 129], [188, 146], [192, 146], [202, 131], [195, 130], [204, 113]])} fill="#a3514c" />
+      {eye(far.x, far.w, 'far')}
+      {eye(near.x, near.w, 'near')}
+      {/* brows: soft arcs, the inner ends lifted just a little */}
+      <path d={soft([[142, 180], [154, 172], [170, 171], [174, 175], [158, 177], [145, 184]])} fill={HAIR} />
+      <path d={soft([[198, 175], [214, 170], [232, 172], [244, 180], [232, 178], [214, 176], [200, 180]])} fill={HAIR} />
 
-      {/* hair: three values in big angular chunks */}
-      <path d={poly([
-        [124, 178], [110, 150], [112, 118], [126, 92], [118, 70], [146, 72], [153, 54], [176, 60], [194, 42], [214, 56], [238, 40],
-        [252, 60], [280, 58], [292, 76], [316, 84], [312, 104], [336, 118], [316, 134], [330, 160], [310, 172], [318, 204], [300, 222],
-        [302, 250], [284, 236], [284, 204], [280, 170], [270, 142], [262, 124], [248, 136], [240, 116], [224, 146], [212, 120],
-        [196, 154], [188, 122], [168, 160], [162, 128], [148, 170], [142, 138], [132, 172],
-      ])} fill={HAIR} />
-      <path d={poly([[252, 60], [282, 54], [290, 78], [314, 84], [306, 106], [322, 124], [296, 128], [280, 104], [262, 88]])} fill={HAIR_MID} />
-      <path d={poly([[196, 40], [212, 58], [236, 38], [246, 62], [226, 72], [204, 74], [184, 66]])} fill={HAIR_MID} />
-      <path d={poly([[118, 76], [146, 78], [150, 52], [170, 64], [158, 88], [134, 104], [120, 104]])} fill={HAIR_HI} />
-      <path d={poly([[176, 62], [194, 38], [206, 56], [190, 76], [172, 84]])} fill={HAIR_HI} />
-      <path d={poly([[114, 120], [128, 98], [140, 110], [124, 136]])} fill={HAIR_HI} opacity={0.8} />
-      <path d={poly([[190, 124], [206, 108], [212, 122], [198, 150]])} fill={HAIR_MID} />
-      <path d={poly([[160, 134], [176, 112], [184, 124], [168, 156]])} fill={HAIR_MID} />
+      {/* the scar, half under the fringe */}
+      <path d={poly([[206, 126], [198, 140], [205, 141], [197, 156], [200, 156], [209, 142], [202, 141], [209, 127]])} fill="#a3514c" />
 
-      {/* round glasses: thin, the near lens catching a slice of light */}
-      <circle cx={208} cy={196} r={27} fill="none" stroke={DARK} strokeWidth={3} />
-      <ellipse cx={150} cy={196} rx={13} ry={22} fill="none" stroke={DARK} strokeWidth={2.6} />
-      <path d={poly([[163, 190], [172, 186], [182, 190], [181, 193], [172, 190], [164, 193]])} fill={DARK} />
-      <path d={poly([[234, 190], [276, 198], [276, 202], [234, 195]])} fill={DARK} />
-      <path d={poly([[186, 184], [196, 172], [206, 170], [196, 180], [190, 190]])} fill="#ffffff" opacity={0.7} />
+      {/* hair: a dark mass with soft, falling locks — untidy, never spiky */}
+      <path d={soft([[132, 184], [120, 152], [124, 116], [140, 88], [166, 66], [200, 56], [236, 60], [266, 74], [290, 100], [302, 132], [306, 168], [300, 200], [292, 228], [282, 206], [280, 170], [272, 138], [256, 118], [226, 108], [196, 110], [168, 122], [148, 146], [138, 170]])} fill={HAIR} />
+      {[
+        // fringe: locks falling to the brow, sweeping to his right (our left)
+        [[236, 96], [214, 150], 26, -8], [[212, 96], [188, 148], 28, -10], [[188, 98], [164, 158], 26, -10], [[166, 104], [146, 168], 22, -8],
+        [[256, 104], [246, 146], 20, -6], [[146, 118], [130, 178], 18, -6],
+        // crown and back: locks lying over the skull, tips kicking out
+        [[196, 70], [150, 76], 24, 8], [[236, 70], [282, 92], 26, -8], [[270, 96], [304, 150], 22, -8], [[286, 150], [298, 212], 18, -6],
+        [[214, 62], [184, 50], 16, 6], [[248, 72], [270, 58], 14, -4],
+      ].map(([r, t, w, b], i) => (
+        <path key={i} d={lock(r as Pt, t as Pt, w as number, b as number)} fill={i % 3 === 0 ? HAIR_MID : HAIR} />
+      ))}
+      {/* cold light on the top-left of the hair */}
+      {[[[150, 96], [132, 132], 10, -3], [[176, 76], [150, 92], 10, 3], [[200, 68], [180, 62], 8, 2]].map(([r, t, w, b], i) => (
+        <path key={`h${i}`} d={lock(r as Pt, t as Pt, w as number, b as number)} fill={HAIR_HI} opacity={0.9} />
+      ))}
+
+      {/* round glasses sitting on the nose bridge */}
+      <ellipse cx={far.x} cy={eyeY} rx={19} ry={22} fill="none" stroke={DARK} strokeWidth={2.6} />
+      <circle cx={near.x} cy={eyeY} r={23} fill="none" stroke={DARK} strokeWidth={2.8} />
+      <path d={soft([[175, 196], [186, 191], [194, 196], [192, 199], [186, 195], [177, 199]])} fill={DARK} />
+      <path d={poly([[239, 195], [276, 200], [276, 204], [239, 199]])} fill={DARK} />
+      <path d={soft([[197, 188], [206, 178], [214, 176], [205, 184], [200, 193]])} fill="#ffffff" opacity={0.6} />
 
       {/* scarf: chunky, planar */}
       <path d={soft([[178, 356], [216, 360], [226, 438], [214, 474], [178, 472], [168, 424]])} fill={SCARF} />
