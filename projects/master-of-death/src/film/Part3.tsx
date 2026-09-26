@@ -51,6 +51,10 @@ export const Part3: React.FC = () => (
         <Shot len={sh.len} enter={sh.enter ?? ['fade', X]}>{sh.render}</Shot>
       </Sequence>
     ))}
+    {/* over Voldemort's hem and the unmarked snow behind him */}
+    <Sequence from={starts[3] + 2} durationInFrames={starts[5] - starts[3] + 2}>
+      <Sub line={NARRATION.torn} len={starts[5] - starts[3] + 2} />
+    </Sequence>
     <Sequence from={QUOTE_AT} durationInFrames={QUOTE_LEN}>
       <Sub line={NARRATION.arena} len={QUOTE_LEN} />
     </Sequence>

@@ -102,6 +102,12 @@ export const Part1: React.FC = () => (
         {(f) => <Balance frame={f + 60} tilt={interpolate(f, [0, 30], [16, 25], {...clamp, easing: Easing.out(Easing.cubic)})} growth={1} others={0} harry={0} push={1 + f / BAL2_FRAMES} />}
       </Shot>
     </Sequence>
+    <Sequence from={84} durationInFrames={80}>
+      <Sub line={NARRATION.weighs} len={80} />
+    </Sequence>
+    <Sequence from={T.pan + 24} durationInFrames={84}>
+      <Sub line={NARRATION.faced} len={84} />
+    </Sequence>
     <Sequence from={T.skull + 82} durationInFrames={62}>
       <Sub line={NARRATION.feared} len={62} />
     </Sequence>

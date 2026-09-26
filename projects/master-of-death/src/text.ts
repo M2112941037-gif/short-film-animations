@@ -4,8 +4,11 @@
 export type Line = {zh: string; en: string};
 
 export const NARRATION = {
+  weighs: {zh: '死神在称量：哪一边的生命更轻。', en: 'Death weighs them both — whose life is lighter.'},
   feared: {zh: '他害怕死亡。', en: 'He feared death.'},
   conquer: {zh: '所以他试图征服它。', en: 'So he tried to conquer it.'},
+  faced: {zh: '而他，一次又一次面对着死亡。', en: 'And he, again and again, stood face to face with death.'},
+  torn: {zh: '撕裂灵魂的代价，是失去生命的重量。', en: 'The price of a torn soul is a life with no weight.'},
   arena: {
     zh: '被拉进决斗场和自己昂首走进去是不一样的，这是世界上全部的不同。',
     en: 'Being dragged into the arena, or walking in with your head held high — that is all the difference in the world.',
