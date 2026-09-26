@@ -22,3 +22,10 @@ npm run studio     # preview
 ```
 
 Style frames for review live in `styleframes/`.
+
+## Design decisions (agreed with the director)
+
+- **Red/green rim light belongs to SF01 only** (Death holding the balance, Voldemort green, Harry red). It was designed for that composition. Do not reuse it in other shots.
+- Death has no face. The hood holds only darkness.
+- No visible light sources or lens-flare hot spots. Light shows up as rims and rays whose origin is hidden.
+- Brushwork stays fine and layered, never blocky.
