@@ -13,7 +13,7 @@ import {SKULL_FRAMES, skullGrowth, SkullMountain} from './SkullMountain';
 // Part 1 (00:00–00:28) on one timeline. Neighbouring shots overlap and hand
 // over with a camera move — a dissolve, a pan across, a tilt up, a fall
 // into black — so nothing cuts hard and nothing needs stitching later.
-type Move = 'fade' | 'pan' | 'tilt' | 'black';
+type Move = 'fade' | 'pan' | 'tilt' | 'black' | 'white';
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
 export const Shot: React.FC<{len: number; enter?: [Move, number]; exit?: [Move, number]; children: (f: number) => React.ReactNode}> = ({len, enter, exit, children}) => {
@@ -25,7 +25,7 @@ export const Shot: React.FC<{len: number; enter?: [Move, number]; exit?: [Move, 
     const q = 1 - p;
     if (enter[0] === 'pan') { x += W * 0.4 * q; blur += 10 * q; }
     if (enter[0] === 'tilt') { y -= H * 0.45 * q; blur += 10 * q; }
-    opacity *= enter[0] === 'black' ? 1 : p;
+    opacity *= enter[0] === 'black' || enter[0] === 'white' ? 1 : p;
   }
   if (exit) {
     const q = interpolate(f, [len - exit[1], len], [0, 1], {...clamp, easing: ease});
@@ -33,11 +33,11 @@ export const Shot: React.FC<{len: number; enter?: [Move, number]; exit?: [Move, 
     if (exit[0] === 'tilt') { y += H * 0.45 * q; blur += 10 * q; }
     if (exit[0] === 'fade') opacity *= 1 - q;
   }
-  const fromBlack = enter?.[0] === 'black' ? interpolate(f, [0, enter[1]], [1, 0], clamp) : 0;
+  const fromBlack = enter?.[0] === 'black' || enter?.[0] === 'white' ? interpolate(f, [0, enter[1]], [1, 0], clamp) : 0;
   return (
     <AbsoluteFill style={{opacity, transform: `translate(${x}px, ${y}px)`, filter: blur > 0.3 ? `blur(${blur}px)` : undefined}}>
       {children(f)}
-      {fromBlack > 0 && <AbsoluteFill style={{background: '#000', opacity: fromBlack}} />}
+      {fromBlack > 0 && <AbsoluteFill style={{background: enter?.[0] === 'white' ? '#f6f7f9' : '#000', opacity: fromBlack}} />}
     </AbsoluteFill>
   );
 };

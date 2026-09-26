@@ -88,3 +88,47 @@ export const ResurrectionStone: React.FC<{r?: number; glow?: number; id?: string
     </g>
   );
 };
+
+// The Elder Wand: long, knotted elder wood, a ring of nodes along it. Lies
+// along +x from the handle at the origin. `snow` 0..1 buries it.
+export const ElderWand: React.FC<{len?: number; snow?: number}> = ({len = 360, snow = 0}) => {
+  const nodes = [0.1, 0.24, 0.42, 0.6, 0.78];
+  const w = (u: number) => 9 - 5 * u + nodes.reduce((a, n) => a + 3.2 * Math.exp(-(((u - n) / 0.025) ** 2)), 0);
+  const top: Pt[] = [], bot: Pt[] = [];
+  for (let i = 0; i <= 40; i++) {
+    const u = i / 40;
+    top.push([u * len, -w(u) / 2]);
+    bot.push([u * len, w(u) / 2]);
+  }
+  const body = smooth([...top, [len + 3, 0], ...bot.reverse()], true, 0.3);
+  return (
+    <g>
+      <path d={body} fill="#3a2a1f" />
+      <path d={smooth(top.map(([x, y]) => [x, y + 1.6] as Pt).concat([[len, 0]]), false)} fill="none" stroke="#8a6a4e" strokeWidth={1.6} opacity={0.7} />
+      {nodes.map((n) => <ellipse key={n} cx={n * len} cy={0} rx={4} ry={w(n) / 2 + 0.5} fill="#2a1d15" />)}
+      {snow > 0 && (
+        <g>
+          <path d={smooth([...top.map(([x, y]) => [x, y - 0.5] as Pt), ...top.slice().reverse().map(([x, y], i) => [x, y - 2 - snow * (7 + 3 * Math.sin(i * 0.9))] as Pt)], true, 0.3)} fill="#f4f7fb" opacity={Math.min(1, snow * 1.5)} />
+          <path d={`M-20,8 Q${len / 2},${-6 - 26 * snow} ${len + 30},8 Z`} fill="#eef2f8" opacity={Math.max(0, snow - 0.35) * 1.5} />
+        </g>
+      )}
+    </g>
+  );
+};
+
+// The sign of the Deathly Hallows, drawn on stroke by stroke as `draw` goes
+// 0 → 1: the line, the circle, the triangle.
+export const Hallows: React.FC<{size?: number; draw?: number; color?: string}> = ({size = 200, draw = 1, color = '#e9e4d6'}) => {
+  const s = size;
+  const tri = `M0,${-s * 0.58} L${s * 0.5},${s * 0.29} L${-s * 0.5},${s * 0.29} Z`;
+  const triLen = 3 * s;
+  const r = s * 0.29 * 0.98;
+  const seg = (a: number, b: number) => Math.min(1, Math.max(0, (draw - a) / (b - a)));
+  return (
+    <g fill="none" stroke={color} strokeWidth={s * 0.022} strokeLinecap="round" strokeLinejoin="round" filter="url(#glow-s)">
+      <line x1={0} y1={-s * 0.58} x2={0} y2={-s * 0.58 + (s * 0.87) * seg(0, 0.3)} />
+      <circle cx={0} cy={0} r={r} strokeDasharray={2 * Math.PI * r} strokeDashoffset={2 * Math.PI * r * (1 - seg(0.25, 0.6))} transform="rotate(-90)" />
+      <path d={tri} strokeDasharray={triLen} strokeDashoffset={triLen * (1 - seg(0.55, 1))} />
+    </g>
+  );
+};

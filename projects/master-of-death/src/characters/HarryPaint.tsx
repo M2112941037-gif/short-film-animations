@@ -93,7 +93,11 @@ export const HarryPaint: React.FC<{id?: string} & HarryExpr> = ({id = 'hp', look
           <stop offset="0.55" stopColor="#0a0f1c" stopOpacity="0.22" />
           <stop offset="1" stopColor="#05070d" stopOpacity="0.65" />
         </linearGradient>
+        {/* the light fall-off only lands on Harry, never on what's behind him */}
+        <filter id={`${id}-white`} colorInterpolationFilters="sRGB"><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0" /></filter>
+        <mask id={`${id}-m`} maskUnits="userSpaceOnUse" x={-100} y={-100} width={700} height={1100}><use href={`#${id}-body`} filter={`url(#${id}-white)`} /></mask>
       </defs>
+      <g id={`${id}-body`}>
 
       {/* shoulders */}
       <path d={soft([[-20, 900], [-20, 520], [10, 440], [70, 392], [150, 366], [206, 374], [276, 368], [330, 380], [384, 412], [420, 470], [430, 520], [430, 900]])} fill={COAT} />
@@ -173,8 +177,11 @@ export const HarryPaint: React.FC<{id?: string} & HarryExpr> = ({id = 'hp', look
       <path d={poly([[152, 332], [210, 316], [270, 312], [306, 326], [305, 338], [270, 326], [210, 330], [154, 346]])} fill={C.gryffGold} />
       <path d={poly([[150, 330], [200, 310], [246, 304], [202, 318]])} fill="#d0484a" opacity={0.7} />
 
-      <rect x={-40} y={20} width={480} height={880} fill={`url(#${id}-fall)`} opacity={1 - 0.5 * warm} />
-      {warm > 0 && <rect x={-40} y={20} width={480} height={880} fill={`url(#${id}-warm)`} opacity={warm} style={{mixBlendMode: 'screen'}} />}
+      </g>
+      <g mask={`url(#${id}-m)`}>
+        <rect x={-40} y={20} width={480} height={880} fill={`url(#${id}-fall)`} opacity={1 - 0.5 * warm} />
+        {warm > 0 && <rect x={-40} y={20} width={480} height={880} fill={`url(#${id}-warm)`} opacity={warm} style={{mixBlendMode: 'screen'}} />}
+      </g>
     </g>
   );
 };

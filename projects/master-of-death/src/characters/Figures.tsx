@@ -22,7 +22,8 @@ const Rimmed: React.FC<{d: string; rim: string; body: string; off: number; blur?
   </g>
 );
 
-export const HarrySilhouette: React.FC<Lit & {eye?: number}> = ({k = 5, rim = '#dfe6f4', rimW = 1, body = '#0a0c11', eye = 1}) => {
+// `wand` 0..1 raises his arm forward with the wand, for the duel.
+export const HarrySilhouette: React.FC<Lit & {eye?: number; wand?: number}> = ({k = 5, rim = '#dfe6f4', rimW = 1, body = '#0a0c11', eye = 1, wand = 0}) => {
   const off = 0.55 * k * rimW;
   const bodyD = S([
     [11, 0], [3, 0], [2.5, -36], [-0.5, -36], [-2, 0], [-10, 0], [-9.5, -20], [-9.5, -40], [-12, -42], [-14, -44], [-15, -50],
@@ -41,6 +42,12 @@ export const HarrySilhouette: React.FC<Lit & {eye?: number}> = ({k = 5, rim = '#
       <Rimmed d={bodyD} rim={rim} body={body} off={off} />
       <Rimmed d={head} rim={rim} body={body} off={off} />
       <Rimmed d={hair} rim={rim} body="#06070a" off={off} />
+      {wand > 0 && (
+        <g>
+          <Rimmed d={S([[6, -80], [12 + 10 * wand, -78 - 4 * wand], [18 + 12 * wand, -74 - 6 * wand], [18 + 12 * wand, -70 - 6 * wand], [12 + 6 * wand, -72], [6, -73]], k)} rim={rim} body={body} off={off} />
+          <line x1={(18 + 12 * wand) * k} y1={(-72 - 6 * wand) * k} x2={(32 + 14 * wand) * k} y2={(-78 - 8 * wand) * k} stroke="#2a1d16" strokeWidth={0.9 * k} strokeLinecap="round" />
+        </g>
+      )}
       {/* Gryffindor scarf: the warm note, lit on the inner side */}
       <path d={S([[-3, -85.5], [4.8, -86.2], [5.6, -81.2], [-3, -80.4]], k)} fill="#7d141a" />
       <path d={S([[3, -83], [6.2, -83], [7.4, -66], [3.6, -66]], k)} fill="#7d141a" />
@@ -147,6 +154,44 @@ export const PanCrowd: React.FC<{k?: number; others?: number; color?: string; ri
         {CROWD.filter((c) => !c.back).map((c, i) => fig(c.x, c.h, c.hair, c.accent, c.beard, `f${i}`))}
       </g>
       {fig(0, 49, undefined, '#b8352c', false, 'harry')}
+    </g>
+  );
+};
+
+// Death far off: a tall, narrow hooded robe, the hem and a few torn strands
+// trailing in the wind. `front` shows the empty hood (no face, ever).
+// Origin at the feet; 100 × k px.
+export const DeathFar: React.FC<{k?: number; t?: number; rim?: string; front?: boolean}> = ({k = 1, t = 0, rim = '#9aa8c4', front = false}) => {
+  const sw = Math.sin(t * Math.PI * 1.5);
+  const hem = Array.from({length: 9}, (_, i) => {
+    const u = i / 8;
+    return [(16 - 32 * u + 3 * sw + 4 * (1 - u)) * k, (-1 + 2.2 * Math.sin(u * 9 + t * 5)) * k] as [number, number];
+  });
+  const body = `M0,${-100 * k} C${6 * k},${-99 * k} ${8 * k},${-93 * k} ${9 * k},${-88 * k} C${13 * k},${-85 * k} ${13 * k},${-78 * k} ${13 * k},${-70 * k} C${15 * k},${-50 * k} ${18 * k + 2 * sw * k},${-20 * k} ${hem[0][0]},${hem[0][1]} ${hem
+    .slice(1)
+    .map(([x, y]) => `L${x},${y}`)
+    .join(' ')} C${-15 * k},${-22 * k} ${-13 * k},${-50 * k} ${-12 * k},${-70 * k} C${-12 * k},${-78 * k} ${-12 * k},${-85 * k} ${-8 * k},${-88 * k} C${-7 * k},${-93 * k} ${-5 * k},${-99 * k} 0,${-100 * k}Z`;
+  return (
+    <g transform={`rotate(${1.2 * sw} 0 0)`}>
+      <path d={body} fill="#07080b" />
+      {[0, 1, 2, 3].map((i) => (
+        <path
+          key={i}
+          d={`M${(14 - i * 2) * k},${(-60 + i * 14) * k} q${(10 + 3 * Math.sin(t * 4 + i)) * k},${(3 + 2 * Math.sin(t * 3 + i)) * k} ${(22 + 4 * Math.sin(t * 5 + i * 2)) * k},${(1 + 3 * Math.sin(t * 6 + i)) * k}`}
+          stroke="#07080b"
+          strokeWidth={(2.4 - i * 0.4) * k}
+          fill="none"
+          strokeLinecap="round"
+          opacity={0.8}
+        />
+      ))}
+      <path d={`M${-8 * k},${-88 * k} C${-12 * k},${-84 * k} ${-12 * k},${-76 * k} ${-12 * k},${-70 * k} C${-13 * k},${-50 * k} ${-15 * k},${-22 * k} ${-16 * k},${-4 * k}`} stroke={rim} strokeWidth={0.9 * k} fill="none" opacity={0.35} />
+      {front && (
+        <g>
+          <ellipse cx={0} cy={-89 * k} rx={5.2 * k} ry={7.4 * k} fill="#2a3040" opacity={0.7} />
+          <ellipse cx={0.3 * k} cy={-88.4 * k} rx={4.2 * k} ry={6.4 * k} fill="#000" />
+        </g>
+      )}
     </g>
   );
 };

@@ -8,6 +8,7 @@ import {FPS, H, RES, W} from './theme';
 import {Opening, OPENING_FRAMES} from './film/Opening';
 import {Part1, PART1_FRAMES} from './film/Part1';
 import {Part2, PART2_FRAMES} from './film/Part2';
+import {Part3, PART3_FRAMES} from './film/Part3';
 import {HarrysPan, HARRYS_PAN_FRAMES} from './film/HarrysPan';
 import {DeathLooms, DEATH_LOOMS_FRAMES} from './film/DeathLooms';
 import {Grab, GRAB_FRAMES} from './film/Grab';
@@ -29,6 +30,7 @@ const size = {width: Math.round(W * RES), height: Math.round(H * RES)};
 const OpeningS = staged(Opening);
 const Part1S = staged(Part1);
 const Part2S = staged(Part2);
+const Part3S = staged(Part3);
 const HarrysPanS = staged(() => <HarrysPan frame={useCurrentFrame()} />);
 const DeathLoomsS = staged(() => <DeathLooms frame={useCurrentFrame()} />);
 const GrabS = staged(() => <Grab frame={useCurrentFrame()} />);
@@ -41,6 +43,7 @@ const SheetS = staged(CharacterSheet);
 
 export const RemotionRoot: React.FC = () => (
   <>
+    <Composition id="Part3" component={Part3S} durationInFrames={PART3_FRAMES} fps={FPS} {...size} />
     <Composition id="Part2" component={Part2S} durationInFrames={PART2_FRAMES} fps={FPS} {...size} />
     <Composition id="Part1" component={Part1S} durationInFrames={PART1_FRAMES} fps={FPS} {...size} />
     <Composition id="Shot-HarrysPan" component={HarrysPanS} durationInFrames={HARRYS_PAN_FRAMES} fps={FPS} {...size} />

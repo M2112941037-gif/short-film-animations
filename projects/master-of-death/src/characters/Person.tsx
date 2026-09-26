@@ -1,6 +1,7 @@
 import React from 'react';
 import {C} from '../theme';
 import {Pt, smooth} from '../util';
+import {body, foot} from './gait';
 
 // A standing person, front-on, lit by a cold key light from upper left.
 // Origin at the feet, 100 units tall × k px. Everyone on Harry's pan is
@@ -26,7 +27,9 @@ const S = (pts: Pt[], k: number, tension = 0.35) => smooth(pts.map(([x, y]) => [
 
 // `reach` 0..1 brings both hands up to the throat; `haze` 0..1 sinks the
 // figure back into the air (atmospheric depth for the back row).
-export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity?: number; rim?: string; reach?: number; haze?: number}> = ({spec, k: k0 = 3, id, opacity = 1, rim = '#c7d2e6', reach = 0, haze = 0}) => {
+// `walk` (radians, stride phase) walks toward the camera; `wand` 0..1 raises
+// the right hand with a wand.
+export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity?: number; rim?: string; reach?: number; haze?: number; walk?: number; wand?: number}> = ({spec, k: k0 = 3, id, opacity = 1, rim = '#c7d2e6', reach = 0, haze = 0, walk, wand = 0}) => {
   const {h = 1, build = 1, coat, coatLen = 0.4, under = '#2a2f3a', legs = '#1c212b', skin = '#dcc0aa', hair, beard, glasses, eyes = '#2a2622', scarf, scars} = spec;
   const k = k0 * h;
   const bw = build;
@@ -35,9 +38,22 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
     [-11 * bw, -79], [-4, -81.5], [4, -81.5], [11 * bw, -79], [13 * bw, -70], [12.5 * bw, -56], [13 * bw + coatLen * 4, hem],
     [2, hem + 1], [0, -56], [-2, hem + 1], [-13 * bw - coatLen * 4, hem], [-12.5 * bw, -56], [-13 * bw, -70],
   ], k, 0.25);
-  const legsD = S([[-8 * bw, hem + 2], [-7.6 * bw, 0], [-1.5, 0], [-0.8, -30], [0.8, -30], [1.5, 0], [7.6 * bw, 0], [8 * bw, hem + 2]], k, 0.15);
+  // a real stride (see gait.ts): the planted foot stays put while the other
+  // swings through; ahead = nearer us = lower on screen. The body rides up
+  // over each planted foot and sinks at each strike, leaning onto it.
+  const fs = walk === undefined ? null : [foot(walk, 0), foot(walk, 1)];
+  const bd = walk === undefined ? {bob: 0.5, sway: 0} : body(walk);
+  const bx = bd.sway * 0.7, by = (0.5 - bd.bob) * 1.4;
+  const fy = (i: 0 | 1) => (fs ? fs[i].a * 1.8 - fs[i].lift * 3 : 0);
+  const [liftL, liftR] = [fy(0), fy(1)];
+  const legD = (sx: number, y: number) =>
+    S([[sx * 8 * bw + bx, hem - 3 + by], [sx * 7.6 * bw + bx * 0.3, y], [sx * 1.3 + bx * 0.3, y], [sx * 0.6 + bx, -30 + by]], k, 0.12);
+  const legsD = S([[-8 * bw, hem + 2], [-7.6 * bw, liftL], [-1.5, liftL], [-0.8, -30], [0.8, -30], [1.5, liftR], [7.6 * bw, liftR], [8 * bw, hem + 2]], k, 0.15);
   // arms: shoulder → elbow → hand; the hands travel from the hips to the throat
-  const hand = (sx: number): Pt => [sx * (14.2 * bw + (3.6 - 14.2 * bw) * reach), -44.5 + (-79.5 + 44.5) * reach];
+  const swing = (sx: number) => (fs ? -fs[sx < 0 ? 0 : 1].a : 0); // this arm forward (+) as the same-side leg goes back
+  const hand0 = (sx: number): Pt => [sx * (14.2 * bw + (3.6 - 14.2 * bw) * reach) - sx * 0.9 * swing(sx), -44.5 + (-79.5 + 44.5) * reach + 1.6 * swing(sx)];
+  // his right hand (our left) comes up and out, holding the wand
+  const hand = (sx: number): Pt => (sx < 0 && wand > 0 ? [hand0(sx)[0] + (-22 - hand0(sx)[0]) * wand, hand0(sx)[1] + (-78 - hand0(sx)[1]) * wand] : hand0(sx));
   const elbow = (sx: number): Pt => [sx * (15 * bw + 3 * reach), -60 + 4 * reach];
   const arm = (sx: number) => [[sx * 11.5 * bw, -77.5], elbow(sx), hand(sx)] as Pt[];
   const face = S([[0, -100], [6.3, -98], [7.6, -92], [6.8, -86], [4.4, -82], [0, -80.8], [-4.4, -82], [-6.8, -86], [-7.6, -92], [-6.3, -98]], k, 0.45);
@@ -58,11 +74,26 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
           <stop offset="1" stopColor="#05070d" stopOpacity="0.55" />
         </linearGradient>
       </defs>
-      {hair.back && <path d={S(hair.back, k)} fill={hair.color} transform={`translate(0 ${-80 * k}) scale(1.12) translate(0 ${80 * k})`} />}
-      {lit(legsD, legs)}
-      <path d={S([[1.5, 0], [0.8, -30], [8 * bw, hem + 2], [7.6 * bw, 0]], k, 0.1)} fill="#000" opacity={0.32} />
-      <path d={S([[-8 * bw, -1.5], [-1.2, -1.5], [-1.2, 0.8], [-8.6 * bw, 0.8]], k, 0.2)} fill="#0b0c0f" />
-      <path d={S([[1.2, -1.5], [8 * bw, -1.5], [8.6 * bw, 0.8], [1.2, 0.8]], k, 0.2)} fill="#0b0c0f" />
+      {hair.back && <path d={S(hair.back, k)} fill={hair.color} transform={`translate(${bx * k} ${by * k - 80 * k}) scale(1.12) translate(0 ${80 * k})`} />}
+      {fs ? (
+        <>
+          {/* the leg that is further back is drawn first */}
+          {(fs[0].a < fs[1].a ? [0, 1] : [1, 0]).map((i) => (
+            <g key={i}>
+              {lit(legD(i ? 1 : -1, fy(i as 0 | 1)), legs)}
+              {i === 1 && <path d={legD(1, fy(1))} fill="#000" opacity={0.3} />}
+            </g>
+          ))}
+        </>
+      ) : (
+        <>
+          {lit(legsD, legs)}
+          <path d={S([[1.5, 0], [0.8, -30], [8 * bw, hem + 2], [7.6 * bw, 0]], k, 0.1)} fill="#000" opacity={0.32} />
+        </>
+      )}
+      <path d={S([[-8 * bw, -1.5 + liftL], [-1.2, -1.5 + liftL], [-1.2, 0.8 + liftL + (fs ? fs[0].a * 0.5 : 0)], [-8.6 * bw, 0.8 + liftL + (fs ? fs[0].a * 0.5 : 0)]], k, 0.2)} fill="#0b0c0f" />
+      <path d={S([[1.2, -1.5 + liftR], [8 * bw, -1.5 + liftR], [8.6 * bw, 0.8 + liftR + (fs ? fs[1].a * 0.5 : 0)], [1.2, 0.8 + liftR + (fs ? fs[1].a * 0.5 : 0)]], k, 0.2)} fill="#0b0c0f" />
+      <g transform={`translate(${bx * k} ${by * k})`}>
       {[-1, 1].map((sx) => (
         <path key={sx} d={smooth(arm(sx).map(([x, y]) => [x * k, y * k] as Pt), false)} fill="none" stroke={coat} strokeWidth={5.2 * k * bw} strokeLinecap="round" strokeLinejoin="round" />
       ))}
@@ -124,12 +155,14 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
           <path d={S([[1.5, -79], [4.8, -79], [5.5, -62], [2.3, -62]], k, 0.2)} fill="#000" opacity={0.25} />
         </g>
       )}
+      {wand > 0 && <line x1={hand(-1)[0] * k} y1={hand(-1)[1] * k} x2={(hand(-1)[0] - 13 * wand) * k} y2={(hand(-1)[1] - 12 * wand) * k} stroke="#3a2a1e" strokeWidth={0.9 * k} strokeLinecap="round" />}
       {[-1, 1].map((sx) => (
         <g key={sx}>
           <ellipse cx={hand(sx)[0] * k} cy={hand(sx)[1] * k} rx={1.8 * k} ry={2.4 * k} fill={skin} />
           {sx > 0 && <ellipse cx={hand(sx)[0] * k} cy={hand(sx)[1] * k} rx={1.8 * k} ry={2.4 * k} fill="#000" opacity={0.3} />}
         </g>
       ))}
+      </g>
     </g>
   );
 };

@@ -10,7 +10,7 @@
     "preview": "REMOTION_RES=0.5 remotion render src/index.ts --concurrency=4 --codec=h264 --crf=20 --log=error",
     "render": "remotion render src/index.ts --concurrency=4 --codec=h264 --crf=18 --log=error",
     "typecheck": "tsc --noEmit -p .",
-    "audio": ".venv/bin/python scripts/score_part1.py"
+    "audio": "cd scripts && for n in 1 2 3; do ../.venv/bin/python score_part$n.py; done"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.529",

@@ -23,3 +23,29 @@ export const voidBackdrop = (ctx: Ctx, noise: Noise, t: number, warm = 0, at: P 
     ctx.restore();
   }
 };
+
+// Open snowfield at dusk: dark blue sky, a pale cold glow low on the
+// horizon, distant drifts, a wide plane of snow toward us.
+export const snowfield = (ctx: Ctx, noise: Noise, t: number, horizon = 560) => {
+  noiseField(ctx, W, H, noise, {scale: 4, freq: 0.0016, t: t * 0.04, warp: 0.5}, (x, y, n) => {
+    if (y < horizon) {
+      const v = Math.max(0, Math.min(1, (y / horizon) ** 1.6 * 0.75 + n * 0.12 + Math.exp(-(((x - 960) / 900) ** 2)) * ((y / horizon) ** 4) * 0.35));
+      const [r, g, b] = rampRGB([[0, '#0c111c'], [0.4, '#243049'], [0.75, '#5d6782'], [1, '#c9c3c4']], v);
+      return [r, g, b, 1];
+    }
+    const d = (y - horizon) / (H - horizon);
+    const v = Math.max(0, Math.min(1, 0.55 + d * 0.3 + n * 0.12 - Math.abs(x - 960) / 4000));
+    const [r, g, b] = rampRGB([[0, '#56627e'], [0.5, '#9aa6be'], [0.8, '#cdd5e3'], [1, '#eef2f7']], v);
+    return [r, g, b, 1];
+  });
+  // soft far drifts along the horizon
+  ctx.save();
+  ctx.fillStyle = rgba('#7d89a4', 0.6);
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 4);
+  for (let x = 0; x <= W; x += 40) ctx.lineTo(x, horizon - 10 - 16 * (noise.n3(x * 0.004, 3, 0) + 1));
+  ctx.lineTo(W, horizon + 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+};

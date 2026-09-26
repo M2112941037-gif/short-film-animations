@@ -13,7 +13,8 @@ export const Scale: React.FC<{
   ring?: boolean;
   metal?: string;
   lit?: string;
-}> = ({L = 200, tilt = 0, left, right, chain = 1.05, ring = true, metal = '#15171c', lit = C.brass}) => {
+  stand?: boolean; // a free-standing balance on a pillar and foot, held by no one
+}> = ({L = 200, tilt = 0, left, right, chain = 1.05, ring = true, metal = '#15171c', lit = C.brass, stand = false}) => {
   const k = L / 200;
   const pivotY = 64 * k;
   const th = (-tilt * Math.PI) / 180;
@@ -76,8 +77,18 @@ export const Scale: React.FC<{
   const scroll = (s: -1 | 1) =>
     `M${s * (L - 4 * k)},${2 * k} C${s * (L + 14 * k)},${-2 * k} ${s * (L + 16 * k)},${-20 * k} ${s * (L + 4 * k)},${-22 * k} C${s * (L - 6 * k)},${-23 * k} ${s * (L - 6 * k)},${-12 * k} ${s * (L + 2 * k)},${-12 * k}`;
 
+  const footY = pivotY + chainLen + L * 0.42;
   return (
     <g>
+      {stand && (
+        <g>
+          <path d={`M${-5 * k},${pivotY} L${-9 * k},${footY - 22 * k} L${9 * k},${footY - 22 * k} L${5 * k},${pivotY}Z`} fill={metal} />
+          <line x1={-3 * k} y1={pivotY + 20 * k} x2={-6 * k} y2={footY - 26 * k} stroke={lit} strokeWidth={1.4 * k} opacity={0.6} />
+          <ellipse cx={0} cy={footY} rx={L * 0.34} ry={L * 0.06} fill={metal} stroke={lit} strokeWidth={1.8 * k} />
+          <path d={`M${-L * 0.34},${footY} L${-L * 0.3},${footY - 22 * k} L${L * 0.3},${footY - 22 * k} L${L * 0.34},${footY}Z`} fill={metal} />
+          <ellipse cx={0} cy={footY - 22 * k} rx={L * 0.3} ry={L * 0.05} fill={metal} stroke={lit} strokeWidth={1.4 * k} />
+        </g>
+      )}
       {pan(-1, left)}
       {pan(1, right)}
       {ring && (
