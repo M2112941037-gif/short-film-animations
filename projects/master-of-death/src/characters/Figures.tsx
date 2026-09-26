@@ -13,6 +13,8 @@ type Lit = {k?: number; rim?: string; rimW?: number; body?: string};
 
 const Rimmed: React.FC<{d: string; rim: string; body: string; off: number; blur?: boolean}> = ({d, rim, body, off, blur = true}) => (
   <g>
+    {/* a weak rim on the far side too, so the light wraps instead of stopping */}
+    <path d={d} fill={rim} opacity={0.4} transform={`translate(${-off * 0.7} ${-off * 0.25})`} filter="url(#blur-1.5)" />
     {/* soft spill first, then the thin hard rim */}
     <path d={d} fill={rim} opacity={0.3} transform={`translate(${off * 1.8} ${-off * 0.3})`} filter="url(#blur-3)" />
     <path d={d} fill={rim} transform={`translate(${off} ${-off * 0.2})`} filter={blur ? 'url(#blur-1.5)' : undefined} />

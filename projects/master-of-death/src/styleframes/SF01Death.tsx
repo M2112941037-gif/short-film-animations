@@ -5,7 +5,7 @@ import {HarrySilhouette, MiniSilhouette, VoldemortSilhouette} from '../character
 import {Filters} from '../fx/Filters';
 import {Snow} from '../fx/Snow';
 import {Surface} from '../fx/Surface';
-import {noiseField, rampRGB, type Ctx, type P} from '../paint/canvas';
+import {noiseField, rampRGB, rgba, type Ctx, type P} from '../paint/canvas';
 import {drawDeath, drawSleeve} from '../paint/death';
 import {Painted} from '../paint/Painted';
 import {rasterize} from '../paint/rasterize';
@@ -51,8 +51,8 @@ const BigPan: React.FC<{x: number; y: number; rx: number; id: string; children?:
 // 00:04 — Death holds the balance; from its two small pans the light throws
 // the two people out, large, onto pans of their own at the front of frame.
 // Rim colours: the duel's two lights, worn by the two who will cast them.
-const RIM_V = '#4dff95';
-const RIM_H = '#ff4b3a';
+const RIM_V = '#2f9a64';
+const RIM_H = '#b8352c';
 
 export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40, tilt = 1.5}) => {
   const t = frame / 24;
@@ -64,15 +64,52 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
   const bigL: P = [330, 1046];
   const bigR: P = [1590, 1046];
 
+  // Light streaming from behind Death. Rays start well away from their
+  // origin (which the hood covers), so there is direction but no source.
+  const rays = (ctx: Ctx, noise: {n3: (x: number, y: number, z: number) => number}, amt = 1) => {
+    // drawn at quarter resolution, then scaled up: the upscale is the blur
+    const q = 4;
+    const off = document.createElement('canvas');
+    off.width = W / q;
+    off.height = H / q;
+    const rc = off.getContext('2d')!;
+    rc.scale(1 / q, 1 / q);
+    const o: P = [960, 250];
+    for (let i = 0; i < 170; i++) {
+      const a = -Math.PI / 2 + ((i / 170) * 2 - 1) * Math.PI * 0.62 + noise.n3(i * 0.7, 1, 0) * 0.04;
+      const spread = 0.004 + Math.abs(noise.n3(i * 0.31, 2, 0)) * 0.018;
+      const r0 = 240, r1 = 700 + Math.abs(noise.n3(i * 0.23, 3, t * 0.2)) * 900;
+      const strength = Math.max(0, noise.n3(i * 0.19, 4, t * 0.15) + 0.25);
+      const g = rc.createRadialGradient(o[0], o[1], r0, o[0], o[1], r1);
+      g.addColorStop(0, rgba('#9fb2d6', 0));
+      g.addColorStop(0.12, rgba('#9fb2d6', 0.26 * strength * amt));
+      g.addColorStop(1, rgba('#9fb2d6', 0));
+      rc.fillStyle = g;
+      rc.beginPath();
+      rc.moveTo(o[0] + Math.cos(a - spread) * r0, o[1] + Math.sin(a - spread) * r0);
+      rc.lineTo(o[0] + Math.cos(a - spread) * r1, o[1] + Math.sin(a - spread) * r1);
+      rc.lineTo(o[0] + Math.cos(a + spread) * r1, o[1] + Math.sin(a + spread) * r1);
+      rc.lineTo(o[0] + Math.cos(a + spread) * r0, o[1] + Math.sin(a + spread) * r0);
+      rc.closePath();
+      rc.fill();
+    }
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(off, 0, 0, W, H);
+    ctx.restore();
+  };
+
   const backdrop = (ctx: Ctx, noise: Parameters<NonNullable<React.ComponentProps<typeof Painted>['before']>>[1]) => {
     noiseField(ctx, W, H, noise, {scale: 4, freq: 0.0014, t: t * 0.05, warp: 0.6}, (x, y, n) => {
-      const pool = Math.exp(-(((x - 960) / 560) ** 2 + ((y - 40) / 380) ** 2));
+      const pool = 0.75 * Math.exp(-(((x - 960) / 620) ** 2 + ((y - 120) / 420) ** 2));
       // white mist rolling in low on both sides, where the big figures stand
       const mist = Math.exp(-(((y - 900) / 220) ** 2)) * (0.2 + 0.3 * Math.min(1, Math.abs(x - 960) / 700));
       const v = Math.max(0, Math.min(1, pool * (0.7 + n * 0.5) + mist * (0.4 + n * 0.9) + n * 0.1 + 0.04));
       const [r, g, b] = rampRGB([[0, '#05070b'], [0.25, '#121925'], [0.5, '#2c3850'], [0.75, '#6a7a9c'], [1, '#d4dcea']], v);
       return [r, g, b, 1];
     });
+    rays(ctx, noise);
     drawDeath(ctx, noise, {cx: 960, cy: 300, k: 0.9, t, rim: '#7888aa', glow, glowAmt: 0.35});
     drawSleeve(ctx, noise, [640, 610], [826, 474], {w: 118, t, rim: '#7888aa'});
   };
@@ -104,7 +141,8 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
   // The painter dulls thin saturated edges, so the rims go back on top:
   // figures rendered with black bodies, added with 'screen' (black adds
   // nothing), once sharp and once blurred for a soft halo — no light source.
-  const rimBloom = async (ctx: Ctx) => {
+  const rimBloom = async (ctx: Ctx, noise: Parameters<typeof rays>[1]) => {
+    rays(ctx, noise, 0.45);
     const layers: [React.ReactNode, number][] = [
       [<g transform={`translate(${bigL[0]} ${bigL[1]})`}><VoldemortSilhouette k={5.6} rim={RIM_V} rimW={1.3} body="#000000" /></g>, 1],
       [<g transform={`translate(${bigR[0]} ${bigR[1]}) scale(-1 1)`}><HarrySilhouette k={5.1} rim={RIM_H} rimW={1.3} body="#000000" /></g>, -1],
@@ -115,10 +153,10 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
       ctx.globalCompositeOperation = 'screen';
       // halo leans toward the light only, so the back edge stays dark
       ctx.filter = 'blur(9px)';
-      ctx.globalAlpha = 0.45;
-      ctx.drawImage(img, dir * 7, 0);
+      ctx.globalAlpha = 0.35;
+      ctx.drawImage(img, dir * 5, 0);
       ctx.filter = 'none';
-      ctx.globalAlpha = 0.6;
+      ctx.globalAlpha = 0.45;
       ctx.drawImage(img, 0, 0);
       ctx.restore();
     }
