@@ -183,8 +183,8 @@ d = GRAB - LOOMS + 0.2
 t = t_(d)
 cluster = sum(saw(note(m), d, dt) for m, dt in [(38, 0), (39, 0.002), (45, -0.002), (26, 0)])
 cutoff_sweep = lp(cluster / 4, 260) * 0.4 + lp(cluster / 4, 1200) * 0.6 * np.linspace(0, 1, len(t)) ** 2
-add(cutoff_sweep * np.linspace(0.2, 1, len(t)) ** 1.5, LOOMS, 0, 0.30)
-add(lp(rng.standard_normal(len(t)), 500) * np.sin(2 * np.pi * 0.7 * t) ** 2 * np.linspace(0.3, 1, len(t)), LOOMS, 0, 0.18)  # breath
+add(cutoff_sweep * np.linspace(0.25, 1, len(t)) ** 1.3, LOOMS, 0, 0.65)
+add(lp(rng.standard_normal(len(t)), 500) * np.sin(2 * np.pi * 0.7 * t) ** 2 * np.linspace(0.3, 1, len(t)), LOOMS, 0, 0.32)  # breath
 
 # 23.8 s · the grab — a hit, a held breath, then dread
 add(thump(2.2, 120, 28), GRAB + 0.3, 0, 0.8)
