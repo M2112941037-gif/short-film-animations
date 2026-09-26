@@ -10,7 +10,7 @@ from scipy import signal
 from scipy.io import wavfile
 
 SR = 44100
-DUR = 27.4
+DUR = 684 / 24 + 0.35
 N = int(SR * DUR)
 rng = np.random.default_rng(7)
 L = np.zeros(N)
@@ -18,6 +18,7 @@ R = np.zeros(N)
 
 # shot boundaries (seconds), from the Part 1 timeline at 24 fps
 SKULL, PAN, LOOMS, GRAB, LOOKS = 172 / 24, 400 / 24, 510 / 24, 572 / 24, 610 / 24
+BAL1, BAL2 = 322 / 24, 636 / 24   # the two balance cutaways
 
 
 def t_(d):
@@ -136,6 +137,30 @@ def wind(d):
     return x * env(len(t), 1.5, 1.5)
 
 
+def groan(d, f0=70, depth=1.0):
+    """A metal beam taking weight: a slow, bending, rasping creak."""
+    t = t_(d)
+    bend = f0 * (1 + 0.25 * depth * np.sin(np.pi * t / d) + 0.03 * np.sin(2 * np.pi * 7 * t))
+    raw = signal.sawtooth(2 * np.pi * np.cumsum(bend) / SR)
+    rasp = bp(raw + 0.4 * rng.standard_normal(len(t)), 240, 1400)
+    return rasp * np.sin(np.pi * np.clip(t / d, 0, 1)) ** 0.7
+
+
+def claw(d=1.3):
+    """Bone knuckles unfolding + a thin screech rising out of the dark."""
+    t = t_(d)
+    knuckles = rattle(d * 0.6, lambda u: 40)
+    screech = np.zeros(len(t))
+    x = rng.standard_normal(len(t))
+    seg = 512
+    for i in range(0, len(t), seg):
+        c = 1200 + 3800 * (i / len(t)) ** 1.5
+        screech[i:i + seg] = bp(x[i:i + seg + 64], c * 0.9, c * 1.12)[: len(screech[i:i + seg])]
+    out = screech * np.linspace(0, 1, len(t)) ** 2 * 0.6
+    out[: len(knuckles)] += knuckles
+    return out + 0.5 * whoosh(d, 150, 900)
+
+
 def heartbeat(d=0.9):
     return thump(0.5, 70, 38) * 0.9, 0.22  # (sound, gap to the second beat)
 
@@ -185,6 +210,13 @@ cluster = sum(saw(note(m), d, dt) for m, dt in [(38, 0), (39, 0.002), (45, -0.00
 cutoff_sweep = lp(cluster / 4, 260) * 0.4 + lp(cluster / 4, 1200) * 0.6 * np.linspace(0, 1, len(t)) ** 2
 add(cutoff_sweep * np.linspace(0.25, 1, len(t)) ** 1.3, LOOMS, 0, 0.65)
 add(lp(rng.standard_normal(len(t)), 500) * np.sin(2 * np.pi * 0.7 * t) ** 2 * np.linspace(0.3, 1, len(t)), LOOMS, 0, 0.32)  # breath
+
+add(claw(1.2), LOOMS + 1.55, -0.3, 0.55)                  # the claw reaching out of the dark
+
+# the balance cutaways: the beam groans as it tips
+add(groan(2.3, 64, 1.0), BAL1 + 0.1, -0.2, 0.30)
+add(groan(1.8, 52, 1.4), BAL2 + 0.1, -0.3, 0.38)
+add(thump(1.6, 60, 30), BAL2 + 1.1, -0.3, 0.30)          # it bottoms out
 
 # 23.8 s · the grab — a hit, a held breath, then dread
 add(thump(2.2, 120, 28), GRAB + 0.3, 0, 0.8)

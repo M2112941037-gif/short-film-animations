@@ -65,16 +65,25 @@ const Head: React.FC<{which: keyof typeof HEADS; k: number; opacity: number}> = 
   );
 };
 
-export const Riddle: React.FC<{k?: number; rim?: string; wind?: number; eyeGlow?: number; age?: number}> = ({
-  k: k0 = 1, rim = C.grey, wind = 1, eyeGlow = 1, age = 3,
+// `t` (seconds) + `flutter` 0..1 set the cloak billowing in the wind.
+export const Riddle: React.FC<{k?: number; rim?: string; wind?: number; eyeGlow?: number; age?: number; t?: number; flutter?: number}> = ({
+  k: k0 = 1, rim = C.grey, wind = 1, eyeGlow = 1, age = 3, t = 0, flutter = 0,
 }) => {
   const k = k0 * (0.84 + 0.16 * Math.min(1, age / 2));
   const w = wind * Math.min(1, 0.25 + age / 3);
   const skinHand = age < 1.5 ? '#e6d3c3' : SKIN;
+  // cloak points further along the trailing edge move more: waves running
+  // down the cloth, the tips snapping
+  const fl = (i: number, ax: number, ay: number): [number, number] => [
+    flutter * ax * Math.sin(t * 3.4 - i * 0.8), flutter * ay * Math.sin(t * 2.9 - i * 1.1 + 0.6),
+  ];
+  const tail = ([[70, -6, 0], [110 + 30 * w, -22 - 6 * w, 1], [150 + 50 * w + 30 * flutter, -48 - 10 * w - 12 * flutter, 2], [118 + 40 * w + 20 * flutter, -58 - 8 * flutter, 3],
+    [170 + 50 * w + 40 * flutter, -96 - 8 * w - 22 * flutter, 4], [120 + 30 * w + 20 * flutter, -104 - 10 * flutter, 5], [140 + 30 * w + 30 * flutter, -140 - 16 * flutter, 6], [80 + 10 * w, -138, 7]] as const)
+    .map(([x, y, i]) => { const [dx, dy] = fl(i, 6 + i * 3, 4 + i * 2.5); return [x + dx, y + dy] as Pt; });
   const robe = smooth(sc([
-    [-20, -236], [-30, -200], [-38, -150], [-46, -96], [-60, -40], [-74, 0], [-40, 6], [-6, 2], [30, 6], [70, -6],
-    [110 + 30 * w, -22 - 6 * w], [150 + 50 * w, -48 - 10 * w], [118 + 40 * w, -58], [170 + 50 * w, -96 - 8 * w], [120 + 30 * w, -104],
-    [140 + 30 * w, -140], [80 + 10 * w, -138], [46, -176], [30, -214], [22, -236],
+    [-20, -236], [-30, -200], [-38, -150], [-46, -96], [-60, -40], [-74, 0], [-40, 6], [-6, 2], [30, 6],
+    ...tail,
+    [46, -176], [30, -214], [22, -236],
   ], k), true, 0.35);
   const inner = smooth(sc([[-8, -220], [-16, -160], [-22, -80], [-30, -10], [6, -20], [2, -100], [8, -180]], k), true, 0.4);
   // arm holding the wand, slightly out from the body and angled down

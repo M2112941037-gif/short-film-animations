@@ -24,8 +24,9 @@ export type PersonSpec = {
 const INK = '#07080b';
 const S = (pts: Pt[], k: number, tension = 0.35) => smooth(pts.map(([x, y]) => [x * k, y * k] as Pt), true, tension);
 
-// `reach` 0..1 brings both hands up to the throat.
-export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity?: number; rim?: string; reach?: number}> = ({spec, k: k0 = 3, id, opacity = 1, rim = '#c7d2e6', reach = 0}) => {
+// `reach` 0..1 brings both hands up to the throat; `haze` 0..1 sinks the
+// figure back into the air (atmospheric depth for the back row).
+export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity?: number; rim?: string; reach?: number; haze?: number}> = ({spec, k: k0 = 3, id, opacity = 1, rim = '#c7d2e6', reach = 0, haze = 0}) => {
   const {h = 1, build = 1, coat, coatLen = 0.4, under = '#2a2f3a', legs = '#1c212b', skin = '#dcc0aa', hair, beard, glasses, eyes = '#2a2622', scarf, scars} = spec;
   const k = k0 * h;
   const bw = build;
@@ -40,10 +41,25 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
   const elbow = (sx: number): Pt => [sx * (15 * bw + 3 * reach), -60 + 4 * reach];
   const arm = (sx: number) => [[sx * 11.5 * bw, -77.5], elbow(sx), hand(sx)] as Pt[];
   const face = S([[0, -100], [6.3, -98], [7.6, -92], [6.8, -86], [4.4, -82], [0, -80.8], [-4.4, -82], [-6.8, -86], [-7.6, -92], [-6.3, -98]], k, 0.45);
+  const fall = `url(#${id}-fall)`;
+  const lit = (d: string, fill: string) => (
+    <>
+      <path d={d} fill={fill} />
+      <path d={d} fill={fall} />
+      {haze > 0 && <path d={d} fill="#56627e" opacity={haze * 0.35} />}
+    </>
+  );
   return (
     <g opacity={opacity}>
+      <defs>
+        <linearGradient id={`${id}-fall`} x1="0.1" y1="0.05" x2="0.9" y2="0.95">
+          <stop offset="0" stopColor="#0a0f1c" stopOpacity="0" />
+          <stop offset="0.55" stopColor="#0a0f1c" stopOpacity="0.2" />
+          <stop offset="1" stopColor="#05070d" stopOpacity="0.55" />
+        </linearGradient>
+      </defs>
       {hair.back && <path d={S(hair.back, k)} fill={hair.color} transform={`translate(0 ${-80 * k}) scale(1.12) translate(0 ${80 * k})`} />}
-      <path d={legsD} fill={legs} />
+      {lit(legsD, legs)}
       <path d={S([[1.5, 0], [0.8, -30], [8 * bw, hem + 2], [7.6 * bw, 0]], k, 0.1)} fill="#000" opacity={0.32} />
       <path d={S([[-8 * bw, -1.5], [-1.2, -1.5], [-1.2, 0.8], [-8.6 * bw, 0.8]], k, 0.2)} fill="#0b0c0f" />
       <path d={S([[1.2, -1.5], [8 * bw, -1.5], [8.6 * bw, 0.8], [1.2, 0.8]], k, 0.2)} fill="#0b0c0f" />
@@ -51,7 +67,7 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
         <path key={sx} d={smooth(arm(sx).map(([x, y]) => [x * k, y * k] as Pt), false)} fill="none" stroke={coat} strokeWidth={5.2 * k * bw} strokeLinecap="round" strokeLinejoin="round" />
       ))}
       <path d={smooth(arm(1).map(([x, y]) => [x * k, y * k] as Pt), false)} fill="none" stroke="#000" strokeOpacity={0.35} strokeWidth={5.2 * k * bw} strokeLinecap="round" />
-      <path d={coatD} fill={coat} />
+      {lit(coatD, coat)}
       {/* open front shows what's underneath */}
       <path d={S([[-3, -80], [3, -80], [2, hem + 2], [-2, hem + 2]], k, 0.2)} fill={under} opacity={0.9} />
       <path d={S([[4.5, -81], [11 * bw, -79], [13 * bw, -70], [12.5 * bw, -56], [13 * bw + coatLen * 4, hem], [3.5, hem + 1], [6, -60]], k, 0.2)} fill="#000" opacity={0.34} />
@@ -62,7 +78,7 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
       {/* neck + head */}
       <path d={S([[-2.6, -82], [2.6, -82], [2.8, -78.5], [-2.8, -78.5]], k, 0.2)} fill={skin} />
       <path d={S([[-2.6, -82], [2.6, -82], [2.8, -78.5], [-2.8, -78.5]], k, 0.2)} fill="#000" opacity={0.3} />
-      <path d={face} fill={skin} />
+      {lit(face, skin)}
       <path d={S([[2.5, -100], [6.3, -98], [7.6, -92], [6.8, -86], [4.4, -82], [1.5, -81], [3.8, -88], [4.2, -94]], k, 0.35)} fill="#3a2a40" opacity={0.3} />
       <path d={S([[-7.4, -94], [-6.4, -86], [-4.6, -82.6], [-6, -85], [-7, -90]], k)} fill="#fff" opacity={0.18} />
       {/* features */}
@@ -74,11 +90,13 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
           <circle cx={(x - 0.35) * k} cy={-92.1 * k} r={0.35 * k} fill="#fff" />
         </g>
       ))}
-      <path d={`M${0},${-91 * k} L${0.8 * k},${-87.3 * k} L${-0.6 * k},${-86.8 * k}`} fill="none" stroke="#6b4f44" strokeWidth={0.45 * k} opacity={0.8} />
-      <path d={`M${-1.9 * k},${-84.4 * k} Q0,${-83.7 * k} ${1.9 * k},${-84.4 * k}`} fill="none" stroke="#7a4f48" strokeWidth={0.55 * k} />
+      <path d={S([[0.4, -91], [1.4, -87.6], [0.4, -86.6], [-0.8, -87]], k, 0.4)} fill="#8c6a66" opacity={0.55} />
+      <path d={S([[-1.8, -84.6], [0, -84.1], [1.8, -84.6], [0.8, -83.6], [-0.9, -83.6]], k, 0.4)} fill="#7a4644" />
+      <ellipse cx={-3.4 * k} cy={-87.6 * k} rx={1.4 * k} ry={0.8 * k} fill="#e59a7f" opacity={0.18} />
       {scars && <path d={`M${-4.6 * k},${-90 * k} L${-1.6 * k},${-86.5 * k} M${2.6 * k},${-96.5 * k} L${5 * k},${-93 * k}`} stroke="#9b7468" strokeWidth={0.35 * k} />}
       {beard && <path d={S(beard.pts, k)} fill={beard.color} />}
       <path d={S(hair.front, k)} fill={hair.color} />
+      <path d={`M${-7.2 * k},${-92 * k} Q${-7.6 * k},${-99 * k} ${-2 * k},${-102.6 * k}`} fill="none" stroke={rim} strokeWidth={0.7 * k} opacity={0.45} strokeLinecap="round" />
       {/* glasses catch the light */}
       {glasses === 'round' && (
         <g fill="none" stroke="#0c0c0e" strokeWidth={0.45 * k}>

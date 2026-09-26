@@ -115,3 +115,38 @@ export const MiniSilhouette: React.FC<{who: 'harry' | 'voldemort'; k?: number; c
     </g>
   );
 };
+
+// Harry's pan seen from far away: Harry with the seven around him, as tiny
+// shapes with one identifying colour each. `others` 0..1 fades the seven.
+// Units: feet at 0, Harry ≈ 50 tall × k.
+const CROWD: {x: number; h: number; hair?: string; accent?: string; back?: boolean; beard?: boolean}[] = [
+  {x: -17, h: 49, accent: '#c9a227'},            // Cedric, Hufflepuff scarf
+  {x: -11, h: 56, hair: '#d7d9de', beard: true, back: true}, // Dumbledore
+  {x: -6, h: 45, hair: '#8a2a1c'},               // Lily
+  {x: 6, h: 50},                                 // James
+  {x: 11, h: 51, back: true},                    // Sirius
+  {x: 15.5, h: 49, back: true},                  // Lupin
+  {x: 19.5, h: 45, hair: '#d9508f'},             // Tonks
+];
+
+export const PanCrowd: React.FC<{k?: number; others?: number; color?: string; rim?: string}> = ({k = 1, others = 1, color = '#07080b', rim = '#9aa7c2'}) => {
+  const fig = (x: number, h: number, hair?: string, accent?: string, beard?: boolean, key?: string) => (
+    <g key={key} transform={`translate(${x * k} 0)`}>
+      <path d={smooth([[-3.6, -h + 11], [3.6, -h + 11], [4.2, -h * 0.45], [3, 0], [0.8, 0], [0, -h * 0.35], [-0.8, 0], [-3, 0], [-4.2, -h * 0.45]].map(([a, b]) => [a * k, b * k] as Pt), true, 0.3)} fill={color} />
+      <circle cx={0} cy={(-h + 6) * k} r={4.2 * k} fill={color} />
+      <path d={`M${-3.8 * k},${(-h + 6) * k} A${4.2 * k},${4.2 * k} 0 0 1 ${3.8 * k},${(-h + 6) * k}`} fill="none" stroke={rim} strokeWidth={0.8 * k} opacity={0.6} />
+      {hair && <path d={`M${-4.4 * k},${(-h + 7) * k} A${4.4 * k},${4.6 * k} 0 0 1 ${4.4 * k},${(-h + 7) * k} L${4.6 * k},${(-h + 12) * k} L${-4.6 * k},${(-h + 12) * k}Z`} fill={hair} />}
+      {beard && <path d={`M${-2.4 * k},${(-h + 8) * k} L${2.4 * k},${(-h + 8) * k} L0,${(-h + 20) * k}Z`} fill={hair} />}
+      {accent && <rect x={-3 * k} y={(-h + 11) * k} width={6 * k} height={1.6 * k} fill={accent} />}
+    </g>
+  );
+  return (
+    <g>
+      <g opacity={others}>
+        {CROWD.filter((c) => c.back).map((c, i) => fig(c.x, c.h, c.hair, c.accent, c.beard, `b${i}`))}
+        {CROWD.filter((c) => !c.back).map((c, i) => fig(c.x, c.h, c.hair, c.accent, c.beard, `f${i}`))}
+      </g>
+      {fig(0, 49, undefined, '#b8352c', false, 'harry')}
+    </g>
+  );
+};

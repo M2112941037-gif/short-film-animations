@@ -10,6 +10,7 @@ import {Part1, PART1_FRAMES} from './film/Part1';
 import {HarrysPan, HARRYS_PAN_FRAMES} from './film/HarrysPan';
 import {DeathLooms, DEATH_LOOMS_FRAMES} from './film/DeathLooms';
 import {Grab, GRAB_FRAMES} from './film/Grab';
+import {Balance} from './film/Balance';
 import {useCurrentFrame} from 'remotion';
 import {CharacterSheet} from './styleframes/CharacterSheet';
 
@@ -28,6 +29,7 @@ const Part1S = staged(Part1);
 const HarrysPanS = staged(() => <HarrysPan frame={useCurrentFrame()} />);
 const DeathLoomsS = staged(() => <DeathLooms frame={useCurrentFrame()} />);
 const GrabS = staged(() => <Grab frame={useCurrentFrame()} />);
+const BalanceS = staged(() => <Balance frame={useCurrentFrame()} tilt={14} growth={0.7} others={1} />);
 const SF01S = staged(SF01Death);
 const SF02S = staged(SF02SkullMountain);
 const SF03S = staged(SF03Gravestone);
@@ -39,6 +41,7 @@ export const RemotionRoot: React.FC = () => (
     <Composition id="Shot-HarrysPan" component={HarrysPanS} durationInFrames={HARRYS_PAN_FRAMES} fps={FPS} {...size} />
     <Composition id="Shot-DeathLooms" component={DeathLoomsS} durationInFrames={DEATH_LOOMS_FRAMES} fps={FPS} {...size} />
     <Composition id="Shot-Grab" component={GrabS} durationInFrames={GRAB_FRAMES} fps={FPS} {...size} />
+    <Composition id="Shot-Balance" component={BalanceS} durationInFrames={48} fps={FPS} {...size} />
     <Composition id="Opening" component={OpeningS} durationInFrames={OPENING_FRAMES} fps={FPS} {...size} />
     <Still id="SF01-Death" component={SF01S} {...size} />
     <Still id="SF02-SkullMountain" component={SF02S} {...size} />

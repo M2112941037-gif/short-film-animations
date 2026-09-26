@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill} from 'remotion';
 import {BoneHand} from '../characters/BoneHand';
-import {HarrySilhouette, MiniSilhouette, VoldemortSilhouette} from '../characters/Figures';
+import {HarrySilhouette, MiniSilhouette, PanCrowd, VoldemortSilhouette} from '../characters/Figures';
 import {Filters} from '../fx/Filters';
 import {Snow} from '../fx/Snow';
 import {Surface} from '../fx/Surface';
@@ -139,7 +139,7 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number; cam?: Camera; p
           L={L}
           tilt={tilt}
           left={<MiniSilhouette who="voldemort" k={1} />}
-          right={<MiniSilhouette who="harry" k={1.05} />}
+          right={<PanCrowd k={0.95} />}
         />
       </g>
       <g transform={`translate(${ring[0] - 142} ${ring[1] - 18}) rotate(14)`}>

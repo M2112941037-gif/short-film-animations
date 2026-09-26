@@ -35,6 +35,11 @@ export const HarrysPan: React.FC<{frame: number}> = ({frame}) => {
   // the pan climbs one notch after each departure
   const rise = CAST.reduce((acc, _, i) => acc + interpolate(s, [FIRST + i * STEP + 0.2, FIRST + i * STEP + 0.55], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)}), 0);
   const drop = rise * 95; // everything far away sinks as we rise
+  // each lightening jolts the pan upward, then it sways and settles
+  const bob = CAST.reduce((acc, _, i) => {
+    const dt = s - (FIRST + i * STEP + 0.22);
+    return dt > 0 ? acc + Math.exp(-dt * 4.5) * Math.sin(dt * 16) * 9 : acc;
+  }, 0);
   const z = interpolate(s, [0, 5], [1, 1.14], {...clamp, easing: Easing.inOut(Easing.quad)});
   const cx = interpolate(s, [0, 5], [960, 1080], clamp), cy = interpolate(s, [0, 5], [560, 600], clamp);
   const camT = `translate(${W / 2 - cx * z} ${H / 2 - cy * z}) scale(${z})`;
@@ -81,6 +86,7 @@ export const HarrysPan: React.FC<{frame: number}> = ({frame}) => {
               ))}
             </g>
 
+            <g transform={`translate(0 ${-bob}) rotate(${bob * 0.08} 960 900)`}>
             {/* our pan's chains */}
             {[-1, 1].map((k) => (
               <g key={k}>
@@ -95,7 +101,7 @@ export const HarrysPan: React.FC<{frame: number}> = ({frame}) => {
             {people.map((p) => (
               <g key={p.who} transform={`translate(${p.x} ${p.y})`}>
                 <ellipse cx={0} cy={0} rx={p.k * 11} ry={p.k * 2} fill="#000" opacity={0.35 * (1 - gone(p.i))} filter="url(#blur-3)" />
-                <Person spec={PEOPLE[p.who]} k={p.k} id={p.who} opacity={1 - gone(p.i)} />
+                <Person spec={PEOPLE[p.who]} k={p.k} id={p.who} opacity={1 - gone(p.i)} haze={p.y < 900 ? 0.6 : 0.25} />
               </g>
             ))}
 
@@ -104,6 +110,7 @@ export const HarrysPan: React.FC<{frame: number}> = ({frame}) => {
             <path d={`M-200,${rimY} Q960,${rimY + 150} ${W + 200},${rimY}`} fill="none" stroke="#f0cf8f" strokeWidth={3} opacity={0.7} filter="url(#rough-m)" />
             {/* Harry, closest to us, watching them go */}
             <g transform="translate(1000 150) scale(1.85)"><HarryPaint id="hp-pan" /></g>
+            </g>
           </g>
         }
       />
