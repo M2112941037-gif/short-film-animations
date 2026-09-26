@@ -64,8 +64,9 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
   const bigL: P = [330, 1046];
   const bigR: P = [1590, 1046];
 
-  // Light streaming from behind Death. Rays start well away from their
-  // origin (which the hood covers), so there is direction but no source.
+  // A top light falling on Death from far above the frame: one soft column
+  // with a few faint shafts drifting inside it. The source is off-screen, so
+  // the hood crown is lit and the face stays in darkness.
   const rays = (ctx: Ctx, noise: {n3: (x: number, y: number, z: number) => number}, amt = 1) => {
     // drawn at quarter resolution, then scaled up: the upscale is the blur
     const q = 4;
@@ -74,24 +75,26 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
     off.height = H / q;
     const rc = off.getContext('2d')!;
     rc.scale(1 / q, 1 / q);
-    const o: P = [960, 250];
-    for (let i = 0; i < 170; i++) {
-      const a = -Math.PI / 2 + ((i / 170) * 2 - 1) * Math.PI * 0.62 + noise.n3(i * 0.7, 1, 0) * 0.04;
-      const spread = 0.004 + Math.abs(noise.n3(i * 0.31, 2, 0)) * 0.018;
-      const r0 = 240, r1 = 700 + Math.abs(noise.n3(i * 0.23, 3, t * 0.2)) * 900;
-      const strength = Math.max(0, noise.n3(i * 0.19, 4, t * 0.15) + 0.25);
-      const g = rc.createRadialGradient(o[0], o[1], r0, o[0], o[1], r1);
-      g.addColorStop(0, rgba('#9fb2d6', 0));
-      g.addColorStop(0.12, rgba('#9fb2d6', 0.26 * strength * amt));
-      g.addColorStop(1, rgba('#9fb2d6', 0));
+    const cone = (x0: number, w0: number, x1: number, w1: number, y1: number, a: number) => {
+      const g = rc.createLinearGradient(0, -60, 0, y1);
+      g.addColorStop(0, rgba('#a9b8d4', a));
+      g.addColorStop(0.55, rgba('#a9b8d4', a * 0.45));
+      g.addColorStop(1, rgba('#a9b8d4', 0));
       rc.fillStyle = g;
       rc.beginPath();
-      rc.moveTo(o[0] + Math.cos(a - spread) * r0, o[1] + Math.sin(a - spread) * r0);
-      rc.lineTo(o[0] + Math.cos(a - spread) * r1, o[1] + Math.sin(a - spread) * r1);
-      rc.lineTo(o[0] + Math.cos(a + spread) * r1, o[1] + Math.sin(a + spread) * r1);
-      rc.lineTo(o[0] + Math.cos(a + spread) * r0, o[1] + Math.sin(a + spread) * r0);
+      rc.moveTo(x0 - w0, -60);
+      rc.lineTo(x0 + w0, -60);
+      rc.lineTo(x1 + w1, y1);
+      rc.lineTo(x1 - w1, y1);
       rc.closePath();
       rc.fill();
+    };
+    cone(960, 150, 960, 430, 760, 0.22 * amt);
+    for (let i = 0; i < 9; i++) {
+      const u = (i / 8) * 2 - 1;
+      const drift = noise.n3(i * 0.9, 1, t * 0.12) * 18;
+      const a = Math.max(0, noise.n3(i * 0.53, 2, t * 0.1) + 0.3) * 0.16 * amt;
+      cone(960 + u * 110 + drift, 10 + (i % 3) * 6, 960 + u * 330 + drift * 2, 26 + (i % 3) * 14, 700, a);
     }
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
