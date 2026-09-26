@@ -14,7 +14,7 @@ type Lit = {k?: number; rim?: string; rimW?: number; body?: string};
 const Rimmed: React.FC<{d: string; rim: string; body: string; off: number; blur?: boolean}> = ({d, rim, body, off, blur = true}) => (
   <g>
     {/* soft spill first, then the thin hard rim */}
-    <path d={d} fill={rim} opacity={0.35} transform={`translate(${off * 2.2} ${-off * 0.3})`} filter="url(#blur-6)" />
+    <path d={d} fill={rim} opacity={0.3} transform={`translate(${off * 1.8} ${-off * 0.3})`} filter="url(#blur-3)" />
     <path d={d} fill={rim} transform={`translate(${off} ${-off * 0.2})`} filter={blur ? 'url(#blur-1.5)' : undefined} />
     <path d={d} fill={body} />
   </g>
@@ -75,10 +75,10 @@ export const VoldemortSilhouette: React.FC<Lit & {eye?: number}> = ({k = 5, rim 
       <g transform={`translate(${1 * k} ${-94 * k}) scale(0.8) translate(${-1 * k} ${94 * k})`}>
       <defs>
         <linearGradient id="vHead" x1="1" y1="0" x2="0" y2="0.2">
-          <stop offset="0" stopColor="#f1f4f6" />
-          <stop offset="0.35" stopColor="#b9c1c9" />
-          <stop offset="0.8" stopColor="#3d434b" />
-          <stop offset="1" stopColor="#15181d" />
+          <stop offset="0" stopColor={rim} />
+          <stop offset="0.12" stopColor="#b4bcc2" />
+          <stop offset="0.45" stopColor="#4a5158" />
+          <stop offset="1" stopColor="#101317" />
         </linearGradient>
       </defs>
       <path d={head} fill="url(#vHead)" />
