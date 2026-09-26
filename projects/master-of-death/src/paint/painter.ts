@@ -142,7 +142,7 @@ export const paintStrokes = (src: ImageData, ctx: CanvasRenderingContext2D, o: P
       path();
       ctx.stroke();
       // bristle hairlines: slightly lighter / darker streaks inside the stroke
-      if (bristles > 0 && R >= 3) {
+      if (bristles > 0 && R >= 2.5) {
         for (let b = 0; b < bristles; b++) {
           const off = (rand() - 0.5) * R * 1.4;
           const sh = 1 + (rand() - 0.5) * 0.35;

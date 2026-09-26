@@ -38,7 +38,7 @@ export const Painted: React.FC<{
         : flow === 'horizontal'
           ? (x: number, y: number) => noise.fbm(x * 0.002, y * 0.002, 5, 3) * 0.9
           : undefined;
-    paintStrokes(src, out, {radii: [18, 9, 4.5, 2.2, 1.3], threshold: 18, maxLen: 12, colorTol: 34, jitter: 0.07, seed: 11, flow: flowFn, ...options});
+    paintStrokes(src, out, {radii: [9, 5, 2.8, 1.6, 1], threshold: 12, maxLen: 14, colorTol: 26, jitter: 0.045, alpha: 0.78, bristles: 4, seed: 11, flow: flowFn, ...options});
     after?.(out, noise);
   };
   return <PaintCanvas draw={draw} renderKey={renderKey} />;

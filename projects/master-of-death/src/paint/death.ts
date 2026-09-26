@@ -2,22 +2,24 @@
 // streams off it — long tattered cloth tongues lifted by a slow, curling
 // wind, thinning into smoke. Nothing about the silhouette is fixed: pass a
 // different `t` and the robe breathes.
-import {capsule, Pt, smooth} from '../util';
-import {buffer, Ctx, P, polyline, ribbon, rgba, resample, trace} from './canvas';
+import {smooth} from '../util';
+import {Ctx, P, polyline, ribbon, rgba, resample, trace} from './canvas';
 import {mulberry, Noise} from './noise';
 
 const path = (d: string) => new Path2D(d);
 
 export type DeathOpts = {
   cx: number; cy: number; k?: number; t?: number;
-  rim?: string; robe?: string; wind?: P; seed?: number; faceLight?: number;
+  rim?: string; robe?: string; wind?: P; seed?: number;
+  glow?: P; glowAmt?: number; glowCol?: string; // the light inside the robe, in scene space
 };
 
 // Robe outline in local units (face centre = 0,0). Left side, top → bottom.
 const SIDE: P[] = [[8, -330], [-60, -300], [-150, -236], [-222, -120], [-246, 10], [-262, 150], [-320, 232], [-470, 330], [-640, 480], [-760, 700], [-820, 900]];
 
 export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
-  const {cx, cy, k = 1, t = 0, rim = '#6d7d9c', robe = '#0b0e14', wind = [0.1, -0.12], seed = 3, faceLight = 1} = o;
+  const {cx, cy, k = 1, t = 0, rim = '#6d7d9c', robe = '#0b0e14', wind = [0.1, -0.12], seed = 3, glowAmt = 0, glowCol = '#c9d4ea'} = o;
+  const glow = o.glow ?? [cx, cy + 300 * k];
   const X = (p: P): P => [cx + p[0] * k, cy + p[1] * k];
   const rand = mulberry(seed);
   const left = SIDE.map(X);
@@ -79,34 +81,81 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
   // ——— the body mass
   const body = new Path2D(smooth(outline, true, 0.45));
   const g = ctx.createLinearGradient(0, cy - 330 * k, 0, cy + 900 * k);
-  g.addColorStop(0, '#1d2330');
-  g.addColorStop(0.3, '#10141b');
-  g.addColorStop(1, '#06070a');
+  g.addColorStop(0, '#1f2633');
+  g.addColorStop(0.3, '#11151d');
+  g.addColorStop(1, '#07080b');
   ctx.fillStyle = g;
   ctx.fill(body);
-  // drapery: long soft light & dark folds inside the body
+
+  // ——— drapery. Each fold is a dark valley with a lit ridge beside it; the
+  // ridge takes the top light on the hood and the inner glow lower down.
+  const [gx, gy] = glow;
+  const lightAt = (p: P) => {
+    const d = Math.hypot(p[0] - gx, p[1] - gy);
+    return Math.min(1, glowAmt * Math.exp(-((d / (520 * k)) ** 2)) + Math.max(0, (cy - p[1]) / (420 * k)) * 0.5);
+  };
+  type Fold = {pts: P[]; ridge: P; w: number};
+  const folds: Fold[] = [
+    // hood: long folds sweeping from the peak around the face
+    {pts: [[-30, -300], [-110, -210], [-160, -80], [-182, 60], [-220, 200]], ridge: [-9, -3], w: 1},
+    {pts: [[40, -300], [118, -210], [168, -80], [188, 60], [226, 200]], ridge: [9, -3], w: 1},
+    {pts: [[-6, -326], [-74, -270], [-140, -170]], ridge: [-7, -4], w: 0.7},
+    {pts: [[14, -326], [84, -266], [146, -170]], ridge: [7, -4], w: 0.7},
+    {pts: [[-60, -250], [-150, -130], [-196, -10]], ridge: [-6, 0], w: 0.6},
+    {pts: [[66, -250], [156, -130], [202, -10]], ridge: [6, 0], w: 0.6},
+    // cowl: heavy cloth hanging in loops beneath the hood
+    {pts: [[-230, 236], [-120, 290], [0, 306], [120, 290], [236, 236]], ridge: [0, 9], w: 1.1},
+    {pts: [[-300, 296], [-160, 380], [0, 404], [160, 380], [306, 296]], ridge: [0, 10], w: 1.2},
+    {pts: [[-380, 380], [-200, 490], [0, 522], [200, 490], [386, 380]], ridge: [0, 10], w: 1.3},
+    {pts: [[-190, 250], [-230, 330], [-300, 400]], ridge: [5, 4], w: 0.8},
+    {pts: [[196, 250], [236, 330], [306, 400]], ridge: [-5, 4], w: 0.8},
+    // long falling folds
+    {pts: [[-440, 440], [-480, 640], [-540, 920]], ridge: [8, 0], w: 1.2},
+    {pts: [[-290, 520], [-310, 700], [-330, 920]], ridge: [8, 0], w: 1},
+    {pts: [[-150, 560], [-140, 740], [-160, 920]], ridge: [7, 0], w: 0.9},
+    {pts: [[20, 580], [40, 760], [30, 920]], ridge: [-7, 0], w: 0.9},
+    {pts: [[170, 560], [190, 740], [200, 920]], ridge: [-7, 0], w: 1},
+    {pts: [[310, 520], [340, 700], [370, 920]], ridge: [-8, 0], w: 1},
+    {pts: [[450, 440], [500, 640], [560, 920]], ridge: [-8, 0], w: 1.2},
+  ];
   ctx.save();
   ctx.clip(body);
-  ctx.filter = `blur(${10 * k}px)`;
-  const folds: Pt[][] = [
-    [[-300, 240], [-360, 420], [-420, 640], [-500, 900]],
-    [[-170, 280], [-210, 500], [-230, 900]],
-    [[160, 280], [220, 500], [250, 900]],
-    [[320, 240], [400, 440], [520, 900]],
-    [[30, 300], [50, 600], [20, 900]],
-  ];
-  folds.forEach((f, i) => {
-    ctx.strokeStyle = rgba(i % 2 ? '#02030a' : rim, i % 2 ? 0.7 : 0.18);
-    ctx.lineWidth = (i % 2 ? 40 : 22) * k;
-    ctx.stroke(path(smooth(f.map(X), false)));
-  });
+  for (const f of folds) {
+    const pts = f.pts.map(X);
+    ctx.filter = `blur(${14 * k}px)`;
+    ctx.strokeStyle = 'rgba(0,0,2,0.75)';
+    ctx.lineWidth = 36 * k * f.w;
+    ctx.stroke(path(smooth(pts, false)));
+    // the ridge catches light unevenly: broken into lit stretches, brightest near the light
+    const ridge = pts.map(([x, y]) => [x + f.ridge[0] * k * 1.6, y + f.ridge[1] * k * 1.6] as P);
+    const samples = resample(ridge, 24);
+    ctx.filter = `blur(${5 * k}px)`;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < samples.length - 1; i++) {
+      const on = noise.n3(i * 0.35, f.pts[0][0] * 0.01, 3) > -0.15;
+      if (!on) continue;
+      const L = lightAt(samples[i].p);
+      ctx.strokeStyle = rgba(glowCol, 0.05 + 0.3 * L);
+      ctx.lineWidth = 6 * k * f.w * (0.6 + 0.6 * Math.abs(noise.n3(i * 0.2, 7, 1)));
+      ctx.beginPath();
+      ctx.moveTo(samples[i].p[0], samples[i].p[1]);
+      ctx.lineTo(samples[i + 1].p[0], samples[i + 1].p[1]);
+      ctx.stroke();
+    }
+  }
+  ctx.filter = 'none';
   // top light on the hood crown and shoulders
   const tl = ctx.createRadialGradient(cx, cy - 300 * k, 10, cx, cy - 300 * k, 520 * k);
-  tl.addColorStop(0, rgba('#8fa0c0', 0.45));
+  tl.addColorStop(0, rgba('#8fa0c0', 0.4));
   tl.addColorStop(1, rgba('#8fa0c0', 0));
-  ctx.filter = 'none';
   ctx.fillStyle = tl;
   ctx.fillRect(cx - 900 * k, cy - 400 * k, 1800 * k, 900 * k);
+  // the inner glow washing up the front of the robe
+  const ig = ctx.createRadialGradient(gx, gy, 10, gx, gy, 460 * k);
+  ig.addColorStop(0, rgba(glowCol, 0.22 * glowAmt));
+  ig.addColorStop(1, rgba(glowCol, 0));
+  ctx.fillStyle = ig;
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.restore();
   // rim only across hood and shoulders — below that the edge is torn cloth
   ctx.save();
@@ -121,140 +170,33 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
     tongue(inset, 160 + rand() * 220, 70 + rand() * 50, robe, 0.97, 0.05);
   }
 
-  // ——— hood opening + skull
-  const opening = new Path2D(smooth([
-    [0, -214], [62, -168], [104, -78], [118, 30], [106, 134], [66, 200], [0, 226], [-66, 200], [-106, 134], [-118, 30], [-104, -78], [-62, -168],
-  ].map((p) => X(p as P)), true, 0.45));
-  ctx.fillStyle = '#020304';
+  // ——— the hood: no face, only depth
+  const openPts: P[] = [[0, -214], [62, -168], [104, -78], [118, 30], [106, 134], [66, 200], [0, 226], [-66, 200], [-106, 134], [-118, 30], [-104, -78], [-62, -168]];
+  const opening = new Path2D(smooth(openPts.map(X), true, 0.45));
+  ctx.fillStyle = '#000000';
   ctx.fill(opening);
   ctx.save();
   ctx.clip(opening);
-  drawSkull(ctx, cx, cy + 24 * k, 0.9 * k, faceLight);
-  // hood shadow from above and around
-  const hs = ctx.createLinearGradient(0, cy - 214 * k, 0, cy + 60 * k);
-  hs.addColorStop(0, 'rgba(0,0,0,1)');
-  hs.addColorStop(0.45, 'rgba(0,0,0,0.85)');
-  hs.addColorStop(0.75, 'rgba(0,0,0,0.25)');
-  hs.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = hs;
-  ctx.fill(opening);
-  const rs = ctx.createRadialGradient(cx - 10 * k, cy + 70 * k, 40 * k, cx, cy + 20 * k, 150 * k);
-  rs.addColorStop(0, 'rgba(0,0,0,0)');
-  rs.addColorStop(1, 'rgba(0,0,0,0.9)');
-  ctx.fillStyle = rs;
-  ctx.fill(opening);
+  // faint cold haze at the inner edge so the void has depth, not a hole
+  ctx.filter = `blur(${16 * k}px)`;
+  ctx.strokeStyle = rgba('#26324a', 0.55);
+  ctx.lineWidth = 26 * k;
+  ctx.stroke(opening);
   ctx.restore();
-  // thick hood lip catching the top light on the key side
+  // the rolled hood lip: thick, lit along its outer curve, shadowed inside
+  const lipAt = (sc: number) => (pts: P[]) => smooth(pts.map(([x, y]) => X([x * sc, y * sc + 4])), false);
   ctx.save();
-  ctx.filter = `blur(${1.5 * k}px)`;
-  ctx.strokeStyle = rgba(rim, 0.6);
-  ctx.lineWidth = 5 * k;
-  ctx.stroke(path(smooth([[-6, -214], [-62, -168], [-104, -78], [-118, 30], [-106, 134]].map((p) => X(p as P)), false)));
-  ctx.strokeStyle = rgba(rim, 0.25);
-  ctx.lineWidth = 3 * k;
-  ctx.stroke(path(smooth([[8, -214], [62, -168], [104, -78], [118, 30]].map((p) => X(p as P)), false)));
-  ctx.restore();
-};
-
-// ——— skull, painted with soft shading
-export const drawSkull = (ctx: Ctx, cx: number, cy: number, k: number, light = 1) => {
-  const T = (pts: P[]) => pts.map(([x, y]) => [cx + x * k, cy + y * k] as Pt);
-  const half: P[] = [[0, -124], [58, -110], [86, -68], [92, -22], [86, 16], [82, 40], [60, 60], [50, 80], [44, 102], [26, 120], [0, 126]];
-  const outline: P[] = [...half, ...half.slice(1, -1).reverse().map(([x, y]) => [-x, y] as P)];
-  const face = path(smooth(T(outline), true, 0.4));
-  ctx.save();
-  ctx.globalAlpha = light;
-  const g = ctx.createLinearGradient(cx - 80 * k, cy - 120 * k, cx + 60 * k, cy + 120 * k);
-  g.addColorStop(0, '#f1ebdc');
-  g.addColorStop(0.5, '#b4ad9e');
-  g.addColorStop(1, '#3e3d44');
-  ctx.fillStyle = g;
-  ctx.fill(face);
-  ctx.clip(face);
   ctx.filter = `blur(${6 * k}px)`;
-  // cheek hollows + temple shadow
-  ctx.fillStyle = 'rgba(10,11,16,0.75)';
-  for (const sx of [-1, 1]) {
-    ctx.fill(path(smooth(T([[sx * 88, 30], [sx * 62, 62], [sx * 50, 92], [sx * 56, 58], [sx * 72, 40]]), true, 0.3)));
-  }
-  ctx.fillStyle = 'rgba(10,11,16,0.45)';
-  ctx.fill(path(smooth(T([[30, -120], [92, -60], [92, 20], [60, 64], [40, 120], [70, 130], [110, 0], [100, -120]]), true, 0.4)));
+  ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+  ctx.lineWidth = 22 * k;
+  ctx.stroke(path(smooth(openPts.map(([x, y]) => X([x * 1.1, y * 1.1 + 2])), true, 0.45)));
   ctx.filter = `blur(${2 * k}px)`;
-  for (const sx of [-1, 1]) {
-    ctx.fillStyle = '#020203';
-    ctx.fill(path(smooth(T([[sx * 12, -8], [sx * 14, -20], [sx * 38, -34], [sx * 64, -30], [sx * 70, -12], [sx * 62, 8], [sx * 40, 16], [sx * 20, 10]]), true, 0.35)));
-  }
-  ctx.fill(path(smooth(T([[0, 22], [9, 32], [12, 46], [5, 54], [0, 50], [-5, 54], [-12, 46], [-9, 32]]), true, 0.4)));
-  ctx.filter = 'none';
-  // teeth
-  ctx.fillStyle = '#9d978a';
-  ctx.fill(path(`M${cx - 30 * k},${cy + 66 * k} Q${cx},${cy + 71 * k} ${cx + 30 * k},${cy + 66 * k} L${cx + 28 * k},${cy + 82 * k} Q${cx},${cy + 86 * k} ${cx - 28 * k},${cy + 82 * k}Z`));
-  ctx.fillStyle = '#6f6b62';
-  ctx.fill(path(`M${cx - 24 * k},${cy + 90 * k} Q${cx},${cy + 94 * k} ${cx + 24 * k},${cy + 90 * k} L${cx + 22 * k},${cy + 102 * k} Q${cx},${cy + 106 * k} ${cx - 22 * k},${cy + 102 * k}Z`));
-  ctx.strokeStyle = 'rgba(5,5,8,0.9)';
-  ctx.lineWidth = 1.6 * k;
-  for (const x of [-20, -10, 0, 10, 20]) {
-    ctx.beginPath(); ctx.moveTo(cx + x * k, cy + 67 * k); ctx.lineTo(cx + x * 0.96 * k, cy + 84 * k); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx + x * 0.9 * k, cy + 90 * k); ctx.lineTo(cx + x * 0.86 * k, cy + 102 * k); ctx.stroke();
-  }
-  ctx.fillStyle = 'rgba(0,0,0,0.85)';
-  ctx.fillRect(cx - 30 * k, cy + 83 * k, 60 * k, 6 * k);
-  // key light on brow + cheekbone
-  ctx.strokeStyle = 'rgba(255,250,238,0.75)';
-  ctx.lineCap = 'round';
-  ctx.lineWidth = 4 * k;
-  ctx.stroke(path(`M${cx - 72 * k},${cy - 34 * k} Q${cx - 44 * k},${cy - 52 * k} ${cx - 16 * k},${cy - 26 * k}`));
+  ctx.strokeStyle = rgba(rim, 0.65);
+  ctx.lineWidth = 5 * k;
+  ctx.stroke(path(lipAt(1.2)([...openPts.slice(7), openPts[0], openPts[1], openPts[2]])));
+  ctx.strokeStyle = rgba(rim, 0.3);
   ctx.lineWidth = 3 * k;
-  ctx.stroke(path(`M${cx - 86 * k},${cy + 22 * k} Q${cx - 70 * k},${cy + 30 * k} ${cx - 58 * k},${cy + 24 * k}`));
-  ctx.restore();
-};
-
-// ——— bone hand, origin at the wrist pointing along +x
-export const drawBoneHand = (ctx: Ctx, x: number, y: number, rot: number, k: number, pose: {curl?: number; spread?: number; thumb?: number; forearm?: number} = {}) => {
-  const {curl = 0.5, spread = 1, thumb = 0.5, forearm = 20} = pose;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate((rot * Math.PI) / 180);
-  const g = ctx.createLinearGradient(0, -20 * k, 0, 30 * k);
-  g.addColorStop(0, '#efe9dc');
-  g.addColorStop(1, '#7d786f');
-  const bone = (a: P, b: P, wa: number, wb: number) => {
-    ctx.fillStyle = g;
-    ctx.strokeStyle = '#08090c';
-    ctx.lineWidth = 1.6 * k;
-    const p = path(capsule(a, b, wa * k, wb * k));
-    ctx.fill(p); ctx.stroke(p);
-    ctx.beginPath(); ctx.arc(b[0], b[1], wb * 1.25 * k, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  };
-  bone([-forearm * k, -7 * k], [2 * k, -5 * k], 5, 6);
-  bone([-forearm * k, 7 * k], [2 * k, 6 * k], 4.5, 5.5);
-  ctx.fillStyle = g;
-  ctx.fill(path(smooth([[0, -12], [14, -14], [22, -4], [20, 10], [8, 14], [-2, 6]].map(([a, b]) => [a * k, b * k] as Pt))));
-  const fingers = [
-    {base: [16, -9], dir: -16, lens: [46, 30, 20, 14], w: 4.2},
-    {base: [18, -3], dir: -5, lens: [50, 33, 22, 15], w: 4.4},
-    {base: [18, 3], dir: 6, lens: [48, 31, 21, 14], w: 4.2},
-    {base: [16, 9], dir: 17, lens: [42, 26, 18, 12], w: 3.8},
-  ];
-  for (const f of fingers) {
-    let p: P = [f.base[0] * k, f.base[1] * k];
-    let ang = (f.dir * spread * Math.PI) / 180;
-    f.lens.forEach((len, si) => {
-      if (si > 0) ang += (curl * (38 + si * 10) * Math.PI) / 180;
-      const q: P = [p[0] + Math.cos(ang) * len * k, p[1] + Math.sin(ang) * len * k];
-      const w = f.w * (1 - si * 0.16);
-      bone(p, q, w, w * 0.82);
-      p = q;
-    });
-  }
-  let p: P = [10 * k, 10 * k];
-  let ang = ((52 - thumb * 20) * Math.PI) / 180;
-  [30, 24, 16].forEach((len, si) => {
-    if (si > 0) ang -= (thumb * 34 * Math.PI) / 180;
-    const q: P = [p[0] + Math.cos(ang) * len * k, p[1] + Math.sin(ang) * len * k];
-    bone(p, q, 4.6 - si * 0.6, 3.8 - si * 0.6);
-    p = q;
-  });
+  ctx.stroke(path(lipAt(1.2)(openPts.slice(2, 5))));
   ctx.restore();
 };
 
@@ -295,4 +237,3 @@ export const drawSleeve = (ctx: Ctx, noise: Noise, from: P, to: P, o: {w?: numbe
   ctx.fill();
 };
 
-export {buffer};

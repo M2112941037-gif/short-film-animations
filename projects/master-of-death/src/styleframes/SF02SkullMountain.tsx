@@ -32,7 +32,7 @@ export const SF02SkullMountain: React.FC<{frame?: number}> = ({frame = 60}) => {
   return (
     <AbsoluteFill style={{background: C.ink}}>
       <Filters />
-      <Painted renderKey={`sf02-${frame}`} options={{radii: [20, 10, 5, 2.6], threshold: 20}} under={<>
+      <Painted renderKey={`sf02-${frame}`} under={<>
         <defs>
           <linearGradient id="sf2-sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#141a25" />
