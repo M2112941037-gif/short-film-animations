@@ -22,17 +22,19 @@ const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 const PEAK: [number, number] = [760, 400];
 const BASE_Y = 960;
 
-export const SkullMountain: React.FC<{frame: number}> = ({frame}) => {
-  const s = frame / FPS;
+// `hold` freezes the story at that frame (pile, age, tilt) while wind and
+// snow keep moving; `cam` overrides the framing.
+export const SkullMountain: React.FC<{frame: number; hold?: number; cam?: {z: number; cx: number; cy: number}}> = ({frame, hold, cam}) => {
+  const s = (hold ?? frame) / FPS;
   const g = interpolate(s, [2.2, 8.2], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)});
   const age = 3 * interpolate(g, [0.08, 0.95], [0, 1], clamp);
   const top = PEAK[1] + (1 - g) * (BASE_Y - PEAK[1]);
   const feetY = top + 52 * g + 18 * (1 - g);
   // camera starts low and close on the boy, then opens up as the pile climbs
   const open = interpolate(s, [1.8, 8.6], [0, 1], {...clamp, easing: Easing.inOut(Easing.quad)});
-  const z = 1.55 + (1 - 1.55) * open;
-  const cx = 760 + (960 - 760) * open;
-  const cy = 780 + (540 - 780) * open;
+  const z = cam?.z ?? 1.55 + (1 - 1.55) * open;
+  const cx = cam?.cx ?? 760 + (960 - 760) * open;
+  const cy = cam?.cy ?? 780 + (540 - 780) * open;
   const camT = `translate(${W / 2 - cx * z} ${H / 2 - cy * z}) scale(${z})`;
   // the far pan rises as the beam tips toward Voldemort
   const tip = interpolate(s, [6.0, 9.6], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)});

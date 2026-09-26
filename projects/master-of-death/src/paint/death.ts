@@ -9,6 +9,9 @@ import {mulberry, Noise} from './noise';
 
 const path = (d: string) => new Path2D(d);
 
+// The hood's opening, in Death's local units (face centre = 0,0).
+export const OPEN_PTS: P[] = [[0, -214], [62, -168], [104, -78], [118, 30], [106, 134], [66, 200], [0, 226], [-66, 200], [-106, 134], [-118, 30], [-104, -78], [-62, -168]];
+
 export type DeathOpts = {
   cx: number; cy: number; k?: number; t?: number;
   rim?: string; robe?: string; wind?: P; seed?: number;
@@ -172,7 +175,7 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
   }
 
   // ——— the hood: no face, only depth
-  const openPts: P[] = [[0, -214], [62, -168], [104, -78], [118, 30], [106, 134], [66, 200], [0, 226], [-66, 200], [-106, 134], [-118, 30], [-104, -78], [-62, -168]];
+  const openPts = OPEN_PTS;
   const opening = new Path2D(smooth(openPts.map(X), true, 0.45));
   ctx.fillStyle = '#000000';
   ctx.fill(opening);
@@ -238,3 +241,28 @@ export const drawSleeve = (ctx: Ctx, noise: Noise, from: P, to: P, o: {w?: numbe
   ctx.fill();
 };
 
+
+// Black mist seeping out over the hood's rim and curling away — the void
+// inside the hood leaking into the world. `amt` 0..1 grows it.
+export const drawHoodMist = (ctx: Ctx, noise: Noise, cx: number, cy: number, k: number, t: number, amt = 1) => {
+  const rim = resample(OPEN_PTS.concat([OPEN_PTS[0]]).map(([x, y]) => [cx + x * k, cy + y * k] as P), 48);
+  const rand = mulberry(21);
+  ctx.save();
+  ctx.filter = `blur(${px(7 * Math.min(2.5, k))}px)`;
+  for (let i = 0; i < 90; i++) {
+    const e = rim[Math.floor(rand() * rim.length)];
+    const out: P = [e.p[0] - cx, e.p[1] - cy];
+    const m = Math.hypot(out[0], out[1]) || 1;
+    const dir: P = [out[0] / m, out[1] / m];
+    const len = (18 + rand() * 26) * amt;
+    const pts = trace(e.p, dir, 22, len * k * 0.35, (p, s) => {
+      const [fx, fy] = noise.curl(p[0] * 0.002, p[1] * 0.002, t * 0.5 + i * 0.01);
+      return [dir[0] * 0.8 + fx * (0.6 + s), dir[1] * 0.8 + fy * (0.6 + s) + 0.2];
+    }, 0.85);
+    ctx.fillStyle = `rgba(2,3,6,${(0.22 + rand() * 0.3) * amt})`;
+    const w0 = (10 + rand() * 22) * k;
+    ribbon(ctx, pts, (u) => w0 * (0.5 + u * 1.2) * (1 - u * 0.7));
+    ctx.fill();
+  }
+  ctx.restore();
+};

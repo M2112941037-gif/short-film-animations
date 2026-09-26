@@ -1,29 +1,74 @@
 import React from 'react';
-import {AbsoluteFill, interpolate, Sequence, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Easing, interpolate, Sequence, useCurrentFrame} from 'remotion';
+import {DEATH_LOOMS_FRAMES, DeathLooms} from './DeathLooms';
+import {Grab, GRAB_FRAMES} from './Grab';
+import {HARRYS_PAN_FRAMES, HarrysPan} from './HarrysPan';
 import {Opening, OPENING_FRAMES} from './Opening';
 import {SKULL_FRAMES, SkullMountain} from './SkullMountain';
+import {W, H} from '../theme';
 
-// Part 1 (00:00–00:27), assembled on one timeline. Shots overlap where they
-// dissolve into each other, so there are no hard seams to stitch later.
-const SKULL_AT = 172;
-export const PART1_FRAMES = SKULL_AT + SKULL_FRAMES;
+// Part 1 (00:00–00:27) on one timeline. Neighbouring shots overlap and hand
+// over with a camera move — a dissolve, a pan across, a tilt up, a fall
+// into black — so nothing cuts hard and nothing needs stitching later.
+type Move = 'fade' | 'pan' | 'tilt' | 'black';
 
-const Dissolve: React.FC<{frames: number; children: React.ReactNode}> = ({frames, children}) => {
+const Shot: React.FC<{len: number; enter?: [Move, number]; exit?: [Move, number]; children: (f: number) => React.ReactNode}> = ({len, enter, exit, children}) => {
   const f = useCurrentFrame();
-  return <AbsoluteFill style={{opacity: interpolate(f, [0, frames], [0, 1], {extrapolateRight: 'clamp'})}}>{children}</AbsoluteFill>;
+  const ease = Easing.inOut(Easing.cubic);
+  let opacity = 1, x = 0, y = 0, blur = 0;
+  if (enter) {
+    const p = interpolate(f, [0, enter[1]], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: ease});
+    const q = 1 - p;
+    if (enter[0] === 'pan') { x += W * 0.4 * q; blur += 10 * q; }
+    if (enter[0] === 'tilt') { y -= H * 0.45 * q; blur += 10 * q; }
+    opacity *= enter[0] === 'black' ? 1 : p;
+  }
+  if (exit) {
+    const q = interpolate(f, [len - exit[1], len], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: ease});
+    if (exit[0] === 'pan') { x -= W * 0.4 * q; blur += 10 * q; }
+    if (exit[0] === 'tilt') { y += H * 0.45 * q; blur += 10 * q; }
+  }
+  const fromBlack = enter?.[0] === 'black' ? interpolate(f, [0, enter[1]], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}) : 0;
+  return (
+    <AbsoluteFill style={{opacity, transform: `translate(${x}px, ${y}px)`, filter: blur > 0.3 ? `blur(${blur}px)` : undefined}}>
+      {children(f)}
+      {fromBlack > 0 && <AbsoluteFill style={{background: '#000', opacity: fromBlack}} />}
+    </AbsoluteFill>
+  );
 };
 
-const SkullShot: React.FC = () => <SkullMountain frame={useCurrentFrame()} />;
+const T = {
+  skull: 172,
+  pan: 172 + SKULL_FRAMES - 12,
+  looms: 172 + SKULL_FRAMES - 12 + HARRYS_PAN_FRAMES - 10,
+};
+const GRAB_AT = T.looms + DEATH_LOOMS_FRAMES - 2;
+const LOOKS_AT = GRAB_AT + GRAB_FRAMES - 10;
+const LOOKS_FRAMES = 44;
+export const PART1_FRAMES = LOOKS_AT + LOOKS_FRAMES;
 
 export const Part1: React.FC = () => (
   <AbsoluteFill style={{background: '#000'}}>
     <Sequence durationInFrames={OPENING_FRAMES}>
       <Opening />
     </Sequence>
-    <Sequence from={SKULL_AT} durationInFrames={SKULL_FRAMES}>
-      <Dissolve frames={OPENING_FRAMES - SKULL_AT}>
-        <SkullShot />
-      </Dissolve>
+    <Sequence from={T.skull} durationInFrames={SKULL_FRAMES}>
+      <Shot len={SKULL_FRAMES} enter={['fade', OPENING_FRAMES - T.skull]} exit={['pan', 12]}>{(f) => <SkullMountain frame={f} />}</Shot>
+    </Sequence>
+    <Sequence from={T.pan} durationInFrames={HARRYS_PAN_FRAMES}>
+      <Shot len={HARRYS_PAN_FRAMES} enter={['pan', 12]} exit={['tilt', 10]}>{(f) => <HarrysPan frame={f} />}</Shot>
+    </Sequence>
+    <Sequence from={T.looms} durationInFrames={DEATH_LOOMS_FRAMES}>
+      <Shot len={DEATH_LOOMS_FRAMES} enter={['tilt', 10]}>{(f) => <DeathLooms frame={f} />}</Shot>
+    </Sequence>
+    <Sequence from={GRAB_AT} durationInFrames={GRAB_FRAMES}>
+      <Shot len={GRAB_FRAMES} enter={['black', 6]}>{(f) => <Grab frame={f} />}</Shot>
+    </Sequence>
+    <Sequence from={LOOKS_AT} durationInFrames={LOOKS_FRAMES}>
+      {/* Voldemort on his summit, looking down at the lifted boy */}
+      <Shot len={LOOKS_FRAMES} enter={['fade', 10]}>
+        {(f) => <SkullMountain frame={f + SKULL_FRAMES} hold={SKULL_FRAMES} cam={{z: 2.3 - 0.35 * (f / LOOKS_FRAMES), cx: 780, cy: 250 + 40 * (f / LOOKS_FRAMES)}} />}
+      </Shot>
     </Sequence>
   </AbsoluteFill>
 );
