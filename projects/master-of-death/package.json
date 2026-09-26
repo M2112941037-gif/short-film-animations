@@ -1,0 +1,26 @@
+{
+  "name": "master-of-death",
+  "version": "0.1.0",
+  "private": true,
+  "description": "《死亡的主人》— code-drawn dark fairytale short film",
+  "scripts": {
+    "studio": "remotion studio",
+    "fonts": "node scripts/fetch-fonts.mjs",
+    "stills": "for id in SF01-Death SF02-SkullMountain SF03-Gravestone; do remotion still src/index.ts $id out/stills/$id.png --log=error; done",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.529",
+    "@remotion/cli": "4.0.529",
+    "@remotion/google-fonts": "4.0.529",
+    "@remotion/renderer": "4.0.529",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.529"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "typescript": "5.9.3"
+  }
+}
