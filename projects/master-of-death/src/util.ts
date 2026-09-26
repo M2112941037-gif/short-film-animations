@@ -62,3 +62,42 @@ export const capsule = (a: Pt, b: Pt, wa: number, wb: number) => {
   const f = (p: Pt, w: number, s: number): string => `${(p[0] + nx * w * s).toFixed(1)},${(p[1] + ny * w * s).toFixed(1)}`;
   return `M${f(a, wa, 1)} L${f(b, wb, 1)} A${wb},${wb} 0 0 1 ${f(b, wb, -1)} L${f(a, wa, -1)} A${wa},${wa} 0 0 1 ${f(a, wa, 1)}Z`;
 };
+
+// Sample a smooth open curve (Catmull-Rom) through control points.
+export const curve = (pts: Pt[], per = 10): Pt[] => {
+  const out: Pt[] = [];
+  const n = pts.length;
+  const get = (i: number) => pts[Math.max(0, Math.min(n - 1, i))];
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = get(i - 1), p1 = get(i), p2 = get(i + 1), p3 = get(i + 2);
+    for (let j = 0; j < per; j++) {
+      const t = j / per, t2 = t * t, t3 = t2 * t;
+      const f = (a: number, b: number, c: number, d: number) =>
+        0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+      out.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]);
+    }
+  }
+  out.push(pts[n - 1]);
+  return out;
+};
+
+// An inked brush line: a filled shape along a curve, thick in the middle and
+// tapering at both ends (`taper` 0 = blunt, 1 = needle-sharp), the way a pen
+// or brush stroke swells and lifts. Returns SVG path data.
+export const ink = (pts: Pt[], w: number, taper = 0.8, bias = 0.5): string => {
+  const c = curve(pts, 8);
+  const L: Pt[] = [], R: Pt[] = [];
+  for (let i = 0; i < c.length; i++) {
+    const a = c[Math.max(0, i - 1)], b = c[Math.min(c.length - 1, i + 1)];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const m = Math.hypot(dx, dy) || 1;
+    const s = i / (c.length - 1);
+    // pressure peaks at `bias` along the stroke
+    const u = s < bias ? s / bias : (1 - s) / (1 - bias);
+    const hw = (w / 2) * ((1 - taper) + taper * Math.sin((Math.PI / 2) * Math.min(1, u)));
+    L.push([c[i][0] - (dy / m) * hw, c[i][1] + (dx / m) * hw]);
+    R.push([c[i][0] + (dy / m) * hw, c[i][1] - (dx / m) * hw]);
+  }
+  const f = (p: Pt) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+  return `M${L.map(f).join(' L')} L${R.reverse().map(f).join(' L')}Z`;
+};

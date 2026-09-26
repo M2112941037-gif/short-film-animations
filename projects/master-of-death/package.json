@@ -9,7 +9,8 @@
     "still": "remotion still src/index.ts --log=error",
     "preview": "REMOTION_RES=0.5 remotion render src/index.ts --concurrency=4 --codec=h264 --crf=20 --log=error",
     "render": "remotion render src/index.ts --concurrency=4 --codec=h264 --crf=18 --log=error",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "audio": ".venv/bin/python scripts/score_part1.py"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.529",

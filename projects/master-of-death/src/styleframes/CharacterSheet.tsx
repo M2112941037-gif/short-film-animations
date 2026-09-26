@@ -1,16 +1,28 @@
 import React from 'react';
 import {AbsoluteFill} from 'remotion';
-import {Riddle} from '../characters/Voldemort';
+import {HarryInk} from '../characters/HarryInk';
 import {Filters} from '../fx/Filters';
+import {Surface} from '../fx/Surface';
+import {noiseField, rampRGB} from '../paint/canvas';
+import {Painted} from '../paint/Painted';
+import {W, H} from '../theme';
 
-// Turnaround sheet for character pieces — a dev tool, not part of the film.
+// Character style test — ink-drawn Harry over the painted world. Dev tool.
 export const CharacterSheet: React.FC = () => (
-  <AbsoluteFill style={{background: '#3a4458'}}>
+  <AbsoluteFill style={{background: '#05070b'}}>
     <Filters />
-    <svg width={1920} height={1080}>
-      {[0, 1, 2, 3].map((a) => (
-        <g key={a} transform={`translate(${260 + a * 460} 1000)`}><Riddle k={2.6} age={a} rim="#e3e8f2" /></g>
-      ))}
-    </svg>
+    <Painted
+      renderKey="sheet"
+      before={(ctx, noise) =>
+        noiseField(ctx, W, H, noise, {scale: 4, freq: 0.0015, warp: 0.6}, (x, y, n) => {
+          const top = Math.exp(-(((x - 700) / 700) ** 2 + ((y + 100) / 650) ** 2));
+          const v = Math.max(0, Math.min(1, top * (0.6 + n * 0.5) + n * 0.1 + 0.05));
+          const [r, g, b] = rampRGB([[0, '#05070b'], [0.35, '#161d2b'], [0.7, '#3d4a66'], [1, '#9aa8c4']], v);
+          return [r, g, b, 1];
+        })
+      }
+      under={<g transform="translate(700 20) scale(2.1)"><HarryInk /></g>}
+    />
+    <Surface grainSeed={3} vignette={0.6} paper={0.8} />
   </AbsoluteFill>
 );
