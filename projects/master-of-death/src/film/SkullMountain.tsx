@@ -28,12 +28,16 @@ const BASE_Y = 960;
 // balance cutaway so both show the same mountain.
 export const skullGrowth = (s: number) => interpolate(s, [2.2, 8.2], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)});
 
-export const SkullMountain: React.FC<{frame: number; hold?: number; cam?: {z: number; cx: number; cy: number}; subs?: boolean; flutter?: number}> = ({frame, hold, cam, subs = true, flutter = 0.35}) => {
+// `collapse` 0..1 (00:52): the pile shakes, a skull or two turns to snow,
+// then all of it does and blows away; he falls back down to his pan.
+export const SkullMountain: React.FC<{frame: number; hold?: number; cam?: {z: number; cx: number; cy: number}; subs?: boolean; flutter?: number; expr?: 'none' | 'shock' | 'smirk'; collapse?: number}> = ({frame, hold, cam, subs = true, flutter = 0.35, expr = 'none', collapse = 0}) => {
   const s = (hold ?? frame) / FPS;
   const g = skullGrowth(s);
   const age = 3 * interpolate(g, [0.08, 0.95], [0, 1], clamp);
   const top = PEAK[1] + (1 - g) * (BASE_Y - PEAK[1]);
-  const feetY = top + 52 * g + 18 * (1 - g);
+  const fall = interpolate(collapse, [0.45, 0.8], [0, 1], {...clamp, easing: Easing.in(Easing.quad)});
+  const feetY = top + 52 * g + 18 * (1 - g) + fall * (BASE_Y - 30 - top - 52 * g);
+  const quake = collapse > 0 && collapse < 0.6 ? Math.sin(frame * 2.1) * 7 * (1 - collapse / 0.6) : 0;
   // camera starts low and close on the boy, then opens up as the pile climbs
   const open = interpolate(s, [1.8, 8.6], [0, 1], {...clamp, easing: Easing.inOut(Easing.quad)});
   const z = cam?.z ?? 1.55 + (1 - 1.55) * open;
@@ -134,10 +138,10 @@ export const SkullMountain: React.FC<{frame: number; hold?: number; cam?: {z: nu
               );
             })}
 
-            <SkullPile px={PEAK[0]} py={PEAK[1]} baseY={BASE_Y} spread={820} count={420} seed="sf2" rim="#dfe4ee" top="#6a7080" bottom="#12151c" kTop={0.3} kBottom={1.05} growth={g} fallBand={0.06} />
+            <g transform={`translate(${quake} ${quake * 0.3})`}><SkullPile px={PEAK[0]} py={PEAK[1]} baseY={BASE_Y} spread={820} count={420} seed="sf2" rim="#dfe4ee" top="#6a7080" bottom="#12151c" kTop={0.3} kBottom={1.05} growth={g} fallBand={0.06} melt={collapse} /></g>
 
             <g transform={`translate(${PEAK[0] + 6} ${feetY})`}>
-              <g transform="scale(1 1.08)"><Riddle k={1} rim="#e3e8f2" wind={1} age={age} t={frame / FPS} flutter={flutter} /></g>
+              <g transform="scale(1 1.08)"><Riddle k={1} rim="#e3e8f2" wind={1} age={age} t={frame / FPS} flutter={flutter} expr={expr} /></g>
             </g>
 
             {/* front lip of the giant pan */}

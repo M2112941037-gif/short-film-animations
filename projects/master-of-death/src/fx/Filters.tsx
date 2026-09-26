@@ -51,6 +51,12 @@ export const FilterDefs: React.FC = () => (
         </filter>
       ))}
 
+      {/* the dead, out of focus: any figure becomes warm, pale light */}
+      <filter id="ghost" colorInterpolationFilters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+        <feColorMatrix type="matrix" values="0.3 0.35 0.1 0 0.5  0.25 0.32 0.1 0 0.4  0.15 0.2 0.1 0 0.26  0 0 0 0.6 0" />
+        <feGaussianBlur stdDeviation="9" />
+      </filter>
+
       {([1.5, 3, 6, 12, 24] as const).map((sd) => (
         <filter key={sd} id={`blur-${sd}`} colorInterpolationFilters="sRGB" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation={sd} />

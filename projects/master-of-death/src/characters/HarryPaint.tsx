@@ -24,7 +24,7 @@ const soft = (pts: Pt[]) => smooth(pts, true, 0.4);
 
 // A soft lock of hair: a tapered, curved leaf from `root` to `tip`,
 // bowing sideways by `bend` (px). Messy hair = many of these, overlapping.
-const lock = (root: Pt, tip: Pt, w: number, bend: number): string => {
+export const lock = (root: Pt, tip: Pt, w: number, bend: number): string => {
   const dx = tip[0] - root[0], dy = tip[1] - root[1];
   const len = Math.hypot(dx, dy) || 1;
   const nx = -dy / len, ny = dx / len;
@@ -37,7 +37,15 @@ const lock = (root: Pt, tip: Pt, w: number, bend: number): string => {
 // of the way from nose to chin, ears from brow to nose base. Turned ~25°:
 // the midline sits a little left of centre and the far eye is only slightly
 // narrower than the near one.
-export const HarryPaint: React.FC<{id?: string}> = ({id = 'hp'}) => {
+// Expression controls: `look` shifts both irises (px, − = his right/our
+// left); `brow` 1 = worried (inner ends up) … 0 = calm; `lid` 0..1 lowers
+// the upper lids (softening, understanding); `smile` 0..1 lifts the mouth;
+// `warm` 0..1 is the stone's light on his face from below-left.
+// `shine` (seconds) keeps the eyes alive: drifting catchlights, a trembling
+// gaze, a wet glint on the lower lid.
+export type HarryExpr = {look?: number; brow?: number; lid?: number; smile?: number; warm?: number; shine?: number};
+
+export const HarryPaint: React.FC<{id?: string} & HarryExpr> = ({id = 'hp', look = 0, brow = 1, lid = 0, smile = 0, warm = 0, shine = 0}) => {
   const mid = 186; // midline x at eye level
   const eyeY = 200;
   const face: Pt[] = [
@@ -50,24 +58,36 @@ export const HarryPaint: React.FC<{id?: string}> = ({id = 'hp'}) => {
     const h = 13;
     const white: Pt[] = [[cx - w / 2, eyeY + 1], [cx - w * 0.2, eyeY - h * 0.5], [cx + w * 0.25, eyeY - h * 0.5], [cx + w / 2, eyeY], [cx + w * 0.15, eyeY + h * 0.42], [cx - w * 0.25, eyeY + h * 0.4]];
     const ir = w * 0.34;
-    const ix = cx - w * 0.06; // both looking a touch to their left, where the others stand
+    const ix = cx - w * 0.06 + look + Math.sin(shine * 0.9) * 0.5; // a touch to their left; the gaze trembles
+    const sx = Math.sin(shine * 1.7) * ir * 0.12, sy = Math.cos(shine * 1.3) * ir * 0.08;
     return (
       <g key={key}>
         <path d={soft(white)} fill="#f3eee7" />
         <circle cx={ix} cy={eyeY} r={ir} fill={C.harryGreen} />
         <path d={`M${ix - ir},${eyeY} A${ir},${ir} 0 0 0 ${ix + ir},${eyeY} Z`} fill="#2f8a57" />
         <circle cx={ix} cy={eyeY + 0.5} r={ir * 0.45} fill={DARK} />
-        <circle cx={ix - ir * 0.4} cy={eyeY - ir * 0.45} r={ir * 0.3} fill="#fff" />
-        <circle cx={ix + ir * 0.35} cy={eyeY + ir * 0.45} r={ir * 0.12} fill="#fff" opacity={0.8} />
+        <circle cx={ix - ir * 0.4 + sx} cy={eyeY - ir * 0.45 + sy} r={ir * 0.3} fill="#fff" />
+        <circle cx={ix + ir * 0.35 - sx * 0.6} cy={eyeY + ir * 0.45 - sy * 0.5} r={ir * 0.12} fill="#fff" opacity={0.8} />
+        {/* a wet sheen swimming across the lower iris */}
+        <path d={`M${ix - ir * 0.75},${eyeY + ir * 0.2} A${ir * 0.8},${ir * 0.8} 0 0 0 ${ix + ir * 0.7},${eyeY + ir * 0.25}`} fill="none" stroke="#e8fff0" strokeWidth={ir * 0.14} opacity={0.18 + 0.14 * Math.sin(shine * 2.3)} strokeLinecap="round" />
+        {lid > 0 && <path d={soft([[cx - w / 2 - 2, eyeY - h], [cx + w / 2 + 3, eyeY - h], [cx + w / 2 + 2, eyeY - 1 + lid * h * 0.45], [cx + w * 0.25, eyeY - h * 0.58 + lid * h * 0.5], [cx - w * 0.2, eyeY - h * 0.56 + lid * h * 0.5], [cx - w / 2 - 1, eyeY + 2]])} fill={SKIN_MID} />}
+        <g transform={`translate(0 ${lid * h * 0.5})`}>
         {/* upper lid: a tapered dark shape, thicker at the outer corner */}
         <path d={soft([[cx - w / 2 - 1, eyeY + 2], [cx - w * 0.2, eyeY - h * 0.56], [cx + w * 0.25, eyeY - h * 0.58], [cx + w / 2 + 2, eyeY - 1], [cx + w / 2 - 1, eyeY + 2], [cx + w * 0.22, eyeY - h * 0.38], [cx - w * 0.2, eyeY - h * 0.36], [cx - w / 2 + 1, eyeY + 3]])} fill={DARK} />
+        </g>
         <path d={soft([[cx - w * 0.3, eyeY + h * 0.46], [cx + w * 0.2, eyeY + h * 0.48], [cx + w * 0.1, eyeY + h * 0.62], [cx - w * 0.25, eyeY + h * 0.58]])} fill={SKIN_SH} opacity={0.6} />
+        <path d={`M${cx - w * 0.32},${eyeY + h * 0.44} Q${cx},${eyeY + h * 0.56} ${cx + w * 0.3},${eyeY + h * 0.42}`} fill="none" stroke="#ffffff" strokeWidth={0.9} opacity={0.25 + 0.2 * Math.sin(shine * 1.9 + 1)} />
       </g>
     );
   };
   return (
     <g>
       <defs>
+        <radialGradient id={`${id}-warm`} cx="0.1" cy="0.75" r="0.8">
+          <stop offset="0" stopColor="#ffb45e" stopOpacity="0.55" />
+          <stop offset="0.5" stopColor="#ff9a4a" stopOpacity="0.18" />
+          <stop offset="1" stopColor="#ff9a4a" stopOpacity="0" />
+        </radialGradient>
         <linearGradient id={`${id}-fall`} x1="0.15" y1="0.1" x2="0.85" y2="0.9">
           <stop offset="0" stopColor="#0a0f1c" stopOpacity="0" />
           <stop offset="0.55" stopColor="#0a0f1c" stopOpacity="0.22" />
@@ -104,7 +124,7 @@ export const HarryPaint: React.FC<{id?: string}> = ({id = 'hp'}) => {
       <ellipse cx={162} cy={236} rx={15} ry={9} fill={WARM} opacity={0.18} />
       <ellipse cx={228} cy={238} rx={14} ry={8} fill={WARM} opacity={0.14} />
       {/* mouth, a third of the way from nose to chin: small, lips pressed */}
-      <path d={soft([[mid - 16, 272], [mid - 5, 269.5], [mid + 2, 271], [mid + 9, 269.5], [mid + 20, 272.5], [mid + 4, 275], [mid - 8, 274.5]])} fill="#7a4644" />
+      <path d={soft([[mid - 16 - 2 * smile, 272 - 5 * smile], [mid - 5, 269.5], [mid + 2, 271], [mid + 9, 269.5], [mid + 20 + 2 * smile, 272.5 - 5 * smile], [mid + 4, 275 + smile], [mid - 8, 274.5 + smile]])} fill="#7a4644" />
       <path d={soft([[mid - 10, 277], [mid + 12, 277], [mid + 6, 283], [mid - 6, 283]])} fill="#d9998b" opacity={0.55} />
       <path d={soft([[mid - 10, 285], [mid + 14, 285], [mid + 6, 290], [mid - 6, 290]])} fill={SKIN_MID} opacity={0.6} />
       <path d={soft([[168, 300], [206, 306], [232, 296], [218, 312], [186, 314]])} fill={SKIN_SH} />
@@ -112,8 +132,8 @@ export const HarryPaint: React.FC<{id?: string}> = ({id = 'hp'}) => {
       {eye(far.x, far.w, 'far')}
       {eye(near.x, near.w, 'near')}
       {/* brows: soft arcs, the inner ends lifted just a little */}
-      <path d={soft([[142, 180], [154, 172], [170, 171], [174, 175], [158, 177], [145, 184]])} fill={HAIR} />
-      <path d={soft([[198, 175], [214, 170], [232, 172], [244, 180], [232, 178], [214, 176], [200, 180]])} fill={HAIR} />
+      <path d={soft([[142, 180], [154, 172 - brow], [170, 171 - 4 * brow + 2], [174, 175 - 4 * brow + 2], [158, 177 - brow], [145, 184]])} fill={HAIR} />
+      <path d={soft([[198, 175 - 4 * brow + 2], [214, 170 - brow], [232, 172], [244, 180], [232, 178], [214, 176 - brow], [200, 180 - 4 * brow + 2]])} fill={HAIR} />
 
       {/* the scar, half under the fringe */}
       <path d={poly([[206, 126], [198, 140], [205, 141], [197, 156], [200, 156], [209, 142], [202, 141], [209, 127]])} fill="#a3514c" />
@@ -153,7 +173,8 @@ export const HarryPaint: React.FC<{id?: string}> = ({id = 'hp'}) => {
       <path d={poly([[152, 332], [210, 316], [270, 312], [306, 326], [305, 338], [270, 326], [210, 330], [154, 346]])} fill={C.gryffGold} />
       <path d={poly([[150, 330], [200, 310], [246, 304], [202, 318]])} fill="#d0484a" opacity={0.7} />
 
-      <rect x={-40} y={20} width={480} height={880} fill={`url(#${id}-fall)`} />
+      <rect x={-40} y={20} width={480} height={880} fill={`url(#${id}-fall)`} opacity={1 - 0.5 * warm} />
+      {warm > 0 && <rect x={-40} y={20} width={480} height={880} fill={`url(#${id}-warm)`} opacity={warm} style={{mixBlendMode: 'screen'}} />}
     </g>
   );
 };

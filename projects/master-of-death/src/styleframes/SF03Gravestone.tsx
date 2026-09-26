@@ -13,8 +13,16 @@ import {ramp} from '../util';
 
 // 00:42 — Godric's Hollow. The snowflake lands on the stone and stays:
 // the dead are real, and gone. Push-in ends on the epitaph.
-export const SF03Gravestone: React.FC<{frame?: number}> = ({frame = 80}) => {
+// `push` 0..1 moves in from the wide shot to the epitaph; `flake` 0..1 is
+// the one snowflake's fall — at 1 it has landed on the stone, and stays;
+// `reveal` 0..1 brings up the carving and its gloss.
+export const SF03Gravestone: React.FC<{frame?: number; push?: number; flake?: number; reveal?: number}> = ({frame = 80, push = 0, flake = 1, reveal = 1}) => {
   const stone: [number, number] = [830, 1010];
+  const z = 1 + 0.95 * push;
+  const fx = 960 + (830 - 960) * push, fy = 540 + (700 - 540) * push;
+  const camT = `translate(${W / 2 - fx * z} ${H / 2 - fy * z}) scale(${z})`;
+  const landY = stone[1] - 40 - 700 - 34;
+  const flakePos: [number, number] = [stone[0] + 70 + Math.sin(flake * 6) * 18 * (1 - flake), -60 + (landY + 60) * flake];
   const skyAt = (u: number, v: number) => {
     const warm = Math.max(0, 1 - Math.hypot((u - 0.82) * 1.4, (v - 0.72) * 2.2));
     const base = ramp([[0, '#101724'], [0.5, '#25304a'], [0.75, '#3d4863'], [1, '#56566a']], v);
@@ -23,7 +31,7 @@ export const SF03Gravestone: React.FC<{frame?: number}> = ({frame = 80}) => {
   return (
     <AbsoluteFill style={{background: C.ink}}>
       <Filters />
-      <Painted renderKey={`sf03-${frame}`} under={<>
+      <Painted renderKey={`sf03-${frame}-${push.toFixed(3)}`} under={<g transform={camT}>
         <defs>
           <linearGradient id="sf3-sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#0d131e" />
@@ -79,17 +87,19 @@ export const SF03Gravestone: React.FC<{frame?: number}> = ({frame = 80}) => {
         <path d={`M-100,${H + 20} L-100,${stone[1] + 50} Q${stone[0] - 480},${stone[1] - 10} ${stone[0] - 300},${stone[1] - 14} Q${stone[0] - 120},${stone[1] - 36} ${stone[0] + 60},${stone[1] - 20} Q${stone[0] + 300},${stone[1] - 34} ${stone[0] + 480},${stone[1] + 6} Q${stone[0] + 800},${stone[1] + 30} ${W + 100},${stone[1] + 20} L${W + 100},${H + 20}Z`} fill="url(#sf3-drift)" filter="url(#paint)" />
         <path d={`M${stone[0] - 300},${stone[1] - 14} Q${stone[0] - 120},${stone[1] - 36} ${stone[0] + 60},${stone[1] - 20} Q${stone[0] + 300},${stone[1] - 34} ${stone[0] + 480},${stone[1] + 6}`} fill="none" stroke="#ffffff" strokeWidth={3} opacity={0.75} filter="url(#rough-m)" />
         <Dabs x={0} y={stone[1] - 10} w={W} h={H - stone[1] + 10} count={260} colorAt={(u) => (u < 0.45 ? '#f3f6fa' : '#9eabc3')} size={[3, 12]} aspect={6} angle={-3} angleJitter={5} opacity={[0.25, 0.6]} seed="sf3-drift" jitter={0.2} jitterColor="#6b7896" />
-        {/* the one flake that lands — and stays */}
-        <g transform={`translate(${stone[0] + 70} ${stone[1] - 40 - 700 - 34})`}>
-          <circle r={14} fill="#ffffff" opacity={0.35} filter="url(#blur-6)" />
-          <circle r={4} fill="#ffffff" />
-        </g>
-      </>} />
+      </g>} />
 
       {/* the carving stays crisp: it is the one thing in the shot that must be read */}
       <svg width={W} height={H} style={{position: 'absolute', filter: 'blur(0.4px)'}}>
-        <g transform={`translate(${stone[0]} ${stone[1]})`}>
-          <Gravestone k={1} layer="text" />
+        <g transform={camT}>
+          <g transform={`translate(${stone[0]} ${stone[1]})`} opacity={reveal}>
+            <Gravestone k={1} layer="text" />
+          </g>
+          {/* the one flake that lands on the stone — and stays */}
+          <g transform={`translate(${flakePos[0]} ${flakePos[1]})`}>
+            <circle r={14} fill="#ffffff" opacity={0.35} filter="url(#blur-6)" />
+            <circle r={4} fill="#ffffff" />
+          </g>
         </g>
       </svg>
       <Snow frame={frame} layer="far" count={260} seed="sf3" wind={0.25} color="#dfe5ef" />
@@ -97,6 +107,7 @@ export const SF03Gravestone: React.FC<{frame?: number}> = ({frame = 80}) => {
       <Snow frame={frame} layer="near" count={9} seed="sf3" wind={0.25} opacity={0.6} />
 
       {/* the Chinese gloss, set small and vertical beside the stone */}
+      <div style={{position: 'absolute', inset: 0, transformOrigin: '0 0', transform: `translate(${W / 2 - fx * z}px, ${H / 2 - fy * z}px) scale(${z})`, opacity: reveal}}>
       <div
         style={{
           position: 'absolute',
@@ -113,6 +124,7 @@ export const SF03Gravestone: React.FC<{frame?: number}> = ({frame = 80}) => {
         }}
       >
         {EPITAPH.gloss}
+      </div>
       </div>
       <Surface grainSeed={frame} vignette={0.62} />
     </AbsoluteFill>

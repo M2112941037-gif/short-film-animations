@@ -59,7 +59,8 @@ export const SkullPile: React.FC<{
   seed?: string; rim?: string; top?: string; bottom?: string; kTop?: number; kBottom?: number;
   growth?: number; // 0..1: how much of the pile exists (it grows bottom-up)
   fallBand?: number; // skulls within this band above the growth front are still falling in
-}> = ({px, py, baseY, spread, count, seed = 'pile', rim = C.snow, top = '#7c8292', bottom = '#1c2029', kTop = 0.32, kBottom = 0.95, growth = 1, fallBand = 0}) => {
+  melt?: number; // 0..1: skulls turning to snow and blowing away (one, two, then all)
+}> = ({px, py, baseY, spread, count, seed = 'pile', rim = C.snow, top = '#7c8292', bottom = '#1c2029', kTop = 0.32, kBottom = 0.95, growth = 1, fallBand = 0, melt = 0}) => {
   const halfAt = (v: number) => spread * Math.pow(v, 0.8);
   const skulls = useMemo(() => {
     const r = rng(seed);
@@ -97,11 +98,12 @@ export const SkullPile: React.FC<{
       };
     });
   }, [px, py, baseY, spread, count, seed, top, bottom, kTop, kBottom]);
-  // interleave bones with skulls by depth
+  // interleave bones with skulls by depth; each gets the moment it melts
+  const mr = rng(`${seed}-melt`);
   const items = [
-    ...skulls.map((s) => ({y: s.y, v: s.v, el: <Skull x={s.x} y={s.y} k={s.k} rot={s.rot} turn={s.turn} fill={s.fill} rim={rim} rimAmt={s.rimAmt} />})),
-    ...bones.map((b) => ({y: b.y, v: b.v, el: <LongBone x={b.x} y={b.y} len={b.len} rot={b.rot} w={b.w} fill={b.fill} rim={rim} rimAmt={b.rimAmt} />})),
-  ].sort((a, b) => a.y - b.y);
+    ...skulls.map((s) => ({x: s.x, y: s.y, v: s.v, k: s.k, el: <Skull x={s.x} y={s.y} k={s.k} rot={s.rot} turn={s.turn} fill={s.fill} rim={rim} rimAmt={s.rimAmt} />})),
+    ...bones.map((b) => ({x: b.x, y: b.y, v: b.v, k: b.w / 11, el: <LongBone x={b.x} y={b.y} len={b.len} rot={b.rot} w={b.w} fill={b.fill} rim={rim} rimAmt={b.rimAmt} />})),
+  ].sort((a, b) => a.y - b.y).map((it, i) => ({...it, th: i === 40 ? 0.04 : i === 90 ? 0.1 : 0.2 + mr() * 0.65}));
 
   const mound = smooth([
     [px, py + 20], [px + halfAt(0.3), py + 0.3 * (baseY - py)], [px + halfAt(0.7), py + 0.7 * (baseY - py)], [px + spread * 1.05, baseY + 40],
@@ -114,8 +116,21 @@ export const SkullPile: React.FC<{
       <clipPath id={`grown-${seed}`}>
         <rect x={px - spread * 1.2} y={py + cut * (baseY - py) + 20} width={spread * 2.4} height={baseY - py + 200} />
       </clipPath>
-      <path d={mound} fill="#0a0c11" clipPath={`url(#grown-${seed})`} />
-      {items.filter((it) => it.v >= cut).map((it, i) => {
+      <path d={mound} fill="#0a0c11" clipPath={`url(#grown-${seed})`} opacity={1 - Math.min(1, melt * 1.6)} />
+      {melt > 0 && items.filter((it) => it.v >= cut && melt >= it.th).map((it, i) => {
+        // each melted skull becomes a small burst of snow, lifted by the wind
+        const dt = melt - it.th;
+        if (dt > 0.35) return null;
+        const f = dt / 0.35;
+        return (
+          <g key={`m${i}`} opacity={1 - f}>
+            {[0, 1, 2, 3, 4].map((j) => (
+              <circle key={j} cx={it.x + (j - 2) * 18 * it.k + f * (220 + j * 40)} cy={it.y - f * (160 + j * 50) + j * 6} r={(5 - j * 0.6) * (0.6 + it.k)} fill="#f4f7fb" />
+            ))}
+          </g>
+        );
+      })}
+      {items.filter((it) => it.v >= cut && melt < it.th).map((it, i) => {
         const p = fallBand > 0 ? (it.v - cut) / fallBand : 1;
         const dy = p < 1 ? -Math.pow(1 - p, 2) * 1100 : 0;
         return dy ? <g key={i} transform={`translate(0 ${dy})`}>{it.el}</g> : <React.Fragment key={i}>{it.el}</React.Fragment>;

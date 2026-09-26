@@ -66,8 +66,10 @@ const Head: React.FC<{which: keyof typeof HEADS; k: number; opacity: number}> = 
 };
 
 // `t` (seconds) + `flutter` 0..1 set the cloak billowing in the wind.
-export const Riddle: React.FC<{k?: number; rim?: string; wind?: number; eyeGlow?: number; age?: number; t?: number; flutter?: number}> = ({
-  k: k0 = 1, rim = C.grey, wind = 1, eyeGlow = 1, age = 3, t = 0, flutter = 0,
+// `expr`: 'shock' widens the eyes and drops the jaw; 'smirk' narrows them
+// and pulls one corner of the lipless mouth up.
+export const Riddle: React.FC<{k?: number; rim?: string; wind?: number; eyeGlow?: number; age?: number; t?: number; flutter?: number; expr?: 'none' | 'shock' | 'smirk'}> = ({
+  k: k0 = 1, rim = C.grey, wind = 1, eyeGlow = 1, age = 3, t = 0, flutter = 0, expr = 'none',
 }) => {
   const k = k0 * (0.84 + 0.16 * Math.min(1, age / 2));
   const w = wind * Math.min(1, 0.25 + age / 3);
@@ -137,12 +139,14 @@ export const Riddle: React.FC<{k?: number; rim?: string; wind?: number; eyeGlow?
             <path d={`M${-12 * k},${-276 * k} Q${-7 * k},${-280 * k} ${-3 * k},${-275 * k}`} fill="none" stroke={INK} strokeWidth={2.4 * k} />
             <path d={`M${3 * k},${-275 * k} Q${7 * k},${-280 * k} ${12 * k},${-276 * k}`} fill="none" stroke={INK} strokeWidth={2.4 * k} />
             <g filter="url(#glow-s)" opacity={eyeGlow}>
-              <ellipse cx={-7.5 * k} cy={-273.5 * k} rx={3 * k} ry={1.5 * k} fill="#ff2a2a" />
-              <ellipse cx={7.5 * k} cy={-273.5 * k} rx={3 * k} ry={1.5 * k} fill="#ff2a2a" />
+              <ellipse cx={-7.5 * k} cy={-273.5 * k} rx={(expr === 'shock' ? 3.8 : 3) * k} ry={(expr === 'shock' ? 2.8 : expr === 'smirk' ? 0.9 : 1.5) * k} fill="#ff2a2a" />
+              <ellipse cx={7.5 * k} cy={-273.5 * k} rx={(expr === 'shock' ? 3.8 : 3) * k} ry={(expr === 'shock' ? 2.8 : expr === 'smirk' ? 0.9 : 1.5) * k} fill="#ff2a2a" />
             </g>
             <line x1={-2.2 * k} y1={-264 * k} x2={-1 * k} y2={-259 * k} stroke={INK} strokeWidth={1.4 * k} />
             <line x1={2.2 * k} y1={-264 * k} x2={1 * k} y2={-259 * k} stroke={INK} strokeWidth={1.4 * k} />
-            <line x1={-7 * k} y1={-251 * k} x2={7 * k} y2={-251 * k} stroke={INK} strokeWidth={1.2 * k} opacity={0.8} />
+            {expr === 'shock' && <ellipse cx={0} cy={-250 * k} rx={4 * k} ry={3 * k} fill="#1a0c0e" />}
+            {expr === 'smirk' && <path d={`M${-7 * k},${-251 * k} Q${0},${-250 * k} ${7 * k},${-255 * k}`} fill="none" stroke={INK} strokeWidth={1.4 * k} />}
+            {expr === 'none' && <line x1={-7 * k} y1={-251 * k} x2={7 * k} y2={-251 * k} stroke={INK} strokeWidth={1.2 * k} opacity={0.8} />}
           </g>
         )}
       </g>

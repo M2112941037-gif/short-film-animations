@@ -16,7 +16,7 @@ import {SKULL_FRAMES, skullGrowth, SkullMountain} from './SkullMountain';
 type Move = 'fade' | 'pan' | 'tilt' | 'black';
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
-const Shot: React.FC<{len: number; enter?: [Move, number]; exit?: [Move, number]; children: (f: number) => React.ReactNode}> = ({len, enter, exit, children}) => {
+export const Shot: React.FC<{len: number; enter?: [Move, number]; exit?: [Move, number]; children: (f: number) => React.ReactNode}> = ({len, enter, exit, children}) => {
   const f = useCurrentFrame();
   const ease = Easing.inOut(Easing.cubic);
   let opacity = 1, x = 0, y = 0, blur = 0;
@@ -42,7 +42,7 @@ const Shot: React.FC<{len: number; enter?: [Move, number]; exit?: [Move, number]
   );
 };
 
-const Sub: React.FC<{line: Line; len: number}> = ({line, len}) => {
+export const Sub: React.FC<{line: Line; len: number}> = ({line, len}) => {
   const f = useCurrentFrame();
   return <Subtitle line={line} opacity={interpolate(f, [0, 10, len - 10, len], [0, 1, 1, 0], clamp)} />;
 };

@@ -11,6 +11,7 @@ import {drawDeath, drawSleeve} from '../paint/death';
 import {Painted} from '../paint/Painted';
 import {SkullPile} from '../props/Skulls';
 import {Scale} from '../props/Scale';
+import {ResurrectionStone} from '../props/Magic';
 import {FPS, H, W} from '../theme';
 
 // The weighing itself, shown plainly: Death's hand holds the balance up in
@@ -18,8 +19,10 @@ import {FPS, H, W} from '../theme';
 // top, on the right Harry and his people. The beam tips toward Voldemort.
 // `tilt` degrees (positive = left pan down), `growth` of the mountain,
 // `others` 0..1 for the people with Harry, `harry` 0 when he's been taken.
-export const Balance: React.FC<{frame: number; tilt: number; growth: number; others: number; harry?: number; push?: number}> = ({
-  frame, tilt, growth, others, harry = 1, push = 0,
+// `stone` puts the Resurrection Stone on Harry's pan: its drop height `y`,
+// its `glow`, and `snow` 0..1 as it turns to snow and drifts away.
+export const Balance: React.FC<{frame: number; tilt: number; growth: number; others: number; harry?: number; push?: number; stone?: {y: number; glow: number; snow: number}}> = ({
+  frame, tilt, growth, others, harry = 1, push = 0, stone,
 }) => {
   const t = frame / FPS + 40;
   const ring: [number, number] = [960, 150];
@@ -33,7 +36,7 @@ export const Balance: React.FC<{frame: number; tilt: number; growth: number; oth
     <AbsoluteFill style={{background: '#05070b'}}>
       <Filters />
       <Painted
-        renderKey={`bal-${frame}-${tilt.toFixed(2)}-${growth.toFixed(3)}-${others.toFixed(2)}-${harry}`}
+        renderKey={`bal-${frame}-${tilt.toFixed(2)}-${growth.toFixed(3)}-${others.toFixed(2)}-${harry}-${JSON.stringify(stone ?? 0)}`}
         flow="swirl"
         before={(ctx, noise) => {
           ctx.save();
@@ -68,7 +71,21 @@ export const Balance: React.FC<{frame: number; tilt: number; growth: number; oth
                     <g transform={`translate(0 ${top + 12})`}><Riddle k={0.6} age={3 * Math.min(1, growth / 0.95)} rim="#e3e8f2" t={t} flutter={1} /></g>
                   </g>
                 }
-                right={harry > 0 ? <g opacity={harry}><PanCrowd k={2.6} others={others} rim="#b9c2d4" /></g> : undefined}
+                right={
+                  <g>
+                    {harry > 0 && <g opacity={harry}><PanCrowd k={2.6} others={others} rim="#b9c2d4" /></g>}
+                    {stone && (
+                      <g transform={`translate(52 ${stone.y})`}>
+                        <g opacity={1 - stone.snow}><ResurrectionStone r={13} glow={stone.glow} id="rs-bal" /></g>
+                        {stone.snow > 0 && Array.from({length: 26}, (_, i) => {
+                          const a = (i * 2.39) % (Math.PI * 2);
+                          const f = stone.snow;
+                          return <circle key={i} cx={Math.cos(a) * 10 - f * (60 + (i % 7) * 30)} cy={Math.sin(a) * 8 - f * (120 + (i % 5) * 45)} r={2.2 + (i % 3)} fill="#f4f7fb" opacity={Math.min(1, f * 4) * (1 - f * 0.8)} />;
+                        })}
+                      </g>
+                    )}
+                  </g>
+                }
               />
             </g>
             <g transform={`translate(${ring[0] - 318} ${ring[1] - 40}) rotate(14)`}>
