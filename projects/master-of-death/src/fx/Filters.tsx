@@ -53,7 +53,7 @@ export const FilterDefs: React.FC = () => (
 
       {/* the dead, out of focus: any figure becomes warm, pale light */}
       <filter id="ghost" colorInterpolationFilters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
-        <feColorMatrix type="matrix" values="0.3 0.35 0.1 0 0.5  0.25 0.32 0.1 0 0.4  0.15 0.2 0.1 0 0.26  0 0 0 0.6 0" />
+        <feColorMatrix type="matrix" values="0.3 0.35 0.1 0 0.72  0.25 0.32 0.1 0 0.6  0.15 0.2 0.1 0 0.4  0 0 0 0.55 0" />
         <feGaussianBlur stdDeviation="9" />
       </filter>
 
