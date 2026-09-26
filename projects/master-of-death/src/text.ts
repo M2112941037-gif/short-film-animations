@@ -21,5 +21,3 @@ export const EPITAPH = {
     {name: 'LILY POTTER', dates: 'BORN 30 JANUARY 1960 · DIED 31 OCTOBER 1981'},
   ],
 };
-
-export const TITLE = {zh: '死亡的主人', en: 'The Master of Death'};

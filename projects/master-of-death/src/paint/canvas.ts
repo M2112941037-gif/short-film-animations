@@ -5,7 +5,7 @@ import type {Noise} from './noise';
 export type Ctx = CanvasRenderingContext2D;
 export type P = [number, number];
 
-export const buffer = (w: number, h: number) => {
+const buffer = (w: number, h: number) => {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;

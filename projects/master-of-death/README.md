@@ -21,7 +21,7 @@ npm run stills     # render style frames to out/stills/
 npm run studio     # preview
 ```
 
-Style frames for review live in `styleframes/`.
+Renders go to `out/` (git-ignored) and are delivered in the chat. The repo holds code only.
 
 ## Design decisions (agreed with the director)
 

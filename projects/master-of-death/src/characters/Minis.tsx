@@ -34,24 +34,3 @@ export const HarryMini: React.FC<{k?: number; rim?: string; facing?: 1 | -1}> = 
     </g>
   );
 };
-
-export const VoldemortMini: React.FC<{k?: number; rim?: string; facing?: 1 | -1}> = ({k = 1, rim = C.grey, facing = 1}) => {
-  const robe = smooth(sc([
-    [-17, 0], [-12, -30], [-9, -60], [-11, -76], [-6, -82], [6, -82], [11, -76], [9, -60], [11, -30], [20, 0], [8, 3], [-4, 2],
-  ], k), true, 0.35);
-  return (
-    <g transform={`scale(${facing} 1)`}>
-      <path d={robe} fill="#07080b" />
-      <path d={robe} fill="none" stroke={rim} strokeWidth={1.1 * k} opacity={0.5} />
-      {/* wand arm, raised slightly forward */}
-      <path d={smooth(sc([[8, -76], [15, -64], [22, -58]], k), false)} stroke="#07080b" strokeWidth={4 * k} fill="none" strokeLinecap="round" />
-      <circle cx={23 * k} cy={-57.5 * k} r={1.8 * k} fill="#d9dde0" />
-      <line x1={24 * k} y1={-58 * k} x2={34 * k} y2={-64 * k} stroke="#2a1d17" strokeWidth={1.3 * k} strokeLinecap="round" />
-      {/* bald, chalk-white head */}
-      <path d={smooth(sc([[0, -103], [6, -100], [7, -92], [5, -85], [0, -83], [-5, -85], [-7, -92], [-6, -100]], k))} fill="#d7dcdf" />
-      <path d={smooth(sc([[-7, -94], [-5, -85], [0, -83], [-2, -92]], k))} fill="#7e8790" opacity={0.6} />
-      <circle cx={3 * k} cy={-93 * k} r={1.1 * k} fill="#e0242a" />
-      <circle cx={-1.5 * k} cy={-93 * k} r={1.1 * k} fill="#e0242a" />
-    </g>
-  );
-};
