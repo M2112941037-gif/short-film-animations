@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill} from 'remotion';
-import {HarryInk} from '../characters/HarryInk';
+import {HarryPaint} from '../characters/HarryPaint';
 import {Filters} from '../fx/Filters';
 import {Surface} from '../fx/Surface';
 import {noiseField, rampRGB} from '../paint/canvas';
@@ -21,7 +21,7 @@ export const CharacterSheet: React.FC = () => (
           return [r, g, b, 1];
         })
       }
-      under={<g transform="translate(700 20) scale(2.1)"><HarryInk /></g>}
+      under={<g transform="translate(700 20) scale(2.1)"><HarryPaint /></g>}
     />
     <Surface grainSeed={3} vignette={0.6} paper={0.8} />
   </AbsoluteFill>
