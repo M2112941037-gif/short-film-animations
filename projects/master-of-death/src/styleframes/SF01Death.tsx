@@ -54,8 +54,23 @@ const BigPan: React.FC<{x: number; y: number; rx: number; id: string; children?:
 const RIM_V = '#2f9a64';
 const RIM_H = '#b8352c';
 
-export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40, tilt = 1.5}) => {
+export type Camera = {z: number; cx: number; cy: number};
+
+// `cam` frames the world (zoom z around world point cx, cy); `proj` 0..1
+// brings in the two big projected figures; `fade` 0..1 lifts from black.
+export const SF01Death: React.FC<{frame?: number; tilt?: number; cam?: Camera; proj?: number; fade?: number}> = ({
+  frame = 40, tilt = 1.5, cam = {z: 1, cx: W / 2, cy: H / 2}, proj = 1, fade = 1,
+}) => {
   const t = frame / 24;
+  const {z} = cam;
+  const tx = W / 2 - cam.cx * z, ty = H / 2 - cam.cy * z;
+  const camT = `translate(${tx} ${ty}) scale(${z})`;
+  const withCam = (ctx: Ctx, fn: () => void) => {
+    ctx.save();
+    ctx.setTransform(z, 0, 0, z, tx, ty);
+    fn();
+    ctx.restore();
+  };
   const ring: P = [960, 486];
   const L = 180;
   const glow: P = [960, 600];
@@ -118,7 +133,7 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
   };
 
   const under = (
-    <>
+    <g transform={camT}>
       <g transform={`translate(${ring[0]} ${ring[1]})`}>
         <Scale
           L={L}
@@ -130,6 +145,7 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
       <g transform={`translate(${ring[0] - 142} ${ring[1] - 18}) rotate(14)`}>
         <BoneHand k={1.22} curl={0.62} spread={0.75} thumb={0.8} hook={0.7} />
       </g>
+      <g opacity={proj}>
       <BigPan x={bigL[0]} y={bigL[1]} rx={300} id="panL">
         <VoldemortSilhouette k={5.6} rim={RIM_V} rimW={1.3} />
       </BigPan>
@@ -138,28 +154,30 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
           <HarrySilhouette k={5.1} rim={RIM_H} rimW={1.3} />
         </g>
       </BigPan>
-    </>
+      </g>
+    </g>
   );
 
   // The painter dulls thin saturated edges, so the rims go back on top:
   // figures rendered with black bodies, added with 'screen' (black adds
   // nothing), once sharp and once blurred for a soft halo — no light source.
   const rimBloom = async (ctx: Ctx, noise: Parameters<typeof rays>[1]) => {
-    rays(ctx, noise, 0.45);
+    withCam(ctx, () => rays(ctx, noise, 0.45));
+    if (proj <= 0) return;
     const layers: [React.ReactNode, number][] = [
       [<g transform={`translate(${bigL[0]} ${bigL[1]})`}><VoldemortSilhouette k={5.6} rim={RIM_V} rimW={1.3} body="#000000" /></g>, 1],
       [<g transform={`translate(${bigR[0]} ${bigR[1]}) scale(-1 1)`}><HarrySilhouette k={5.1} rim={RIM_H} rimW={1.3} body="#000000" /></g>, -1],
     ];
     for (const [el, dir] of layers) {
-      const img = await rasterize(el);
+      const img = await rasterize(<g transform={camT}>{el}</g>);
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
       // halo leans toward the light only, so the back edge stays dark
       ctx.filter = 'blur(9px)';
-      ctx.globalAlpha = 0.35;
-      ctx.drawImage(img, dir * 5, 0);
+      ctx.globalAlpha = 0.35 * proj;
+      ctx.drawImage(img, dir * 5 * z, 0);
       ctx.filter = 'none';
-      ctx.globalAlpha = 0.45;
+      ctx.globalAlpha = 0.45 * proj;
       ctx.drawImage(img, 0, 0);
       ctx.restore();
     }
@@ -169,10 +187,8 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
     <AbsoluteFill style={{background: '#05070b'}}>
       <Filters />
       <Painted
-        renderKey={`sf01-${frame}`}
-        before={(ctx, noise) => {
-          backdrop(ctx, noise);
-        }}
+        renderKey={`sf01-${frame}-${z}-${cam.cx}-${cam.cy}-${proj}-${tilt}`}
+        before={(ctx, noise) => withCam(ctx, () => backdrop(ctx, noise))}
         under={under}
         flow="swirl"
         after={rimBloom}
@@ -181,6 +197,7 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number}> = ({frame = 40
       <Snow frame={frame} layer="mid" count={40} seed="sf1" wind={0.2} color="#dfe5ef" />
       <Snow frame={frame} layer="near" count={7} seed="sf1" wind={0.2} opacity={0.6} />
       <Surface grainSeed={frame} vignette={0.6} paper={0.6} />
+      {fade < 1 && <AbsoluteFill style={{background: '#000', opacity: 1 - fade}} />}
     </AbsoluteFill>
   );
 };

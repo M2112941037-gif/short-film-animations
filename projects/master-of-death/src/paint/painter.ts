@@ -59,7 +59,11 @@ export const paintStrokes = (src: ImageData, ctx: CanvasRenderingContext2D, o: P
   } = o;
   const w = src.width, h = src.height;
   const S: Img = {w, h, d: src.data};
-  const rand = mulberry(seed);
+  // Every brush stroke draws its randomness from its own grid cell, never
+  // from a shared sequence: where the picture doesn't change between frames,
+  // the strokes don't either. Only moving things re-paint.
+  const cellRng = (layer: number, gx: number, gy: number) =>
+    mulberry((Math.imul(seed + 1, 73856093) ^ Math.imul(layer + 1, 19349663) ^ Math.imul(gx + 7919, 83492791) ^ Math.imul(gy + 104729, 2654435761)) >>> 0);
   const at = (x: number, y: number) => ((Math.min(h - 1, Math.max(0, y | 0)) * w + Math.min(w - 1, Math.max(0, x | 0))) * 4);
 
   for (let li = 0; li < radii.length; li++) {
@@ -73,11 +77,13 @@ export const paintStrokes = (src: ImageData, ctx: CanvasRenderingContext2D, o: P
     };
     const cur = li === 0 ? null : ctx.getImageData(0, 0, w, h).data;
     const grid = Math.max(1, Math.round(R));
-    const starts: [number, number][] = [];
+    const starts: {x: number; y: number; r: () => number; order: number}[] = [];
     for (let gy = 0; gy < h; gy += grid) {
       for (let gx = 0; gx < w; gx += grid) {
+        const rand = cellRng(li, gx / grid, gy / grid);
+        const order = rand();
         if (!cur) {
-          starts.push([gx + rand() * grid, gy + rand() * grid]);
+          starts.push({x: gx + rand() * grid, y: gy + rand() * grid, r: rand, order});
           continue;
         }
         // area error: find the worst point in the cell
@@ -90,18 +96,15 @@ export const paintStrokes = (src: ImageData, ctx: CanvasRenderingContext2D, o: P
           err += e;
           if (e > maxE) { maxE = e; bx = x; by = y; }
         }
-        if (err / n > threshold) starts.push([bx, by]);
+        if (err / n > threshold) starts.push({x: bx, y: by, r: rand, order});
       }
     }
-    // shuffle so strokes interleave instead of tiling in rows
-    for (let i = starts.length - 1; i > 0; i--) {
-      const j = Math.floor(rand() * (i + 1));
-      [starts[i], starts[j]] = [starts[j], starts[i]];
-    }
+    // stable shuffle so strokes interleave instead of tiling in rows
+    starts.sort((a, b) => a.order - b.order);
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    for (const [sx, sy] of starts) {
+    for (const {x: sx, y: sy, r: rand} of starts) {
       const i0 = at(sx, sy);
       const v = 1 + (rand() - 0.5) * 2 * jitter;
       const cr = Math.min(255, S.d[i0] * v), cg = Math.min(255, S.d[i0 + 1] * v), cb = Math.min(255, S.d[i0 + 2] * v);
