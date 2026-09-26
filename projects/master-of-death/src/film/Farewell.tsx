@@ -6,7 +6,6 @@ import {LilyPaint} from '../characters/LilyPaint';
 import {Filters} from '../fx/Filters';
 import {Snow} from '../fx/Snow';
 import {Surface} from '../fx/Surface';
-import {drawDeath} from '../paint/death';
 import {Painted} from '../paint/Painted';
 import {ResurrectionStone} from '../props/Magic';
 import {FPS, H, W} from '../theme';
@@ -81,32 +80,6 @@ export const LetGo: React.FC<{frame: number}> = ({frame}) => {
       <svg width={W} height={H} style={{position: 'absolute'}}>
         <g transform={`translate(${stone[0]} ${stone[1]}) rotate(${drop * 200})`}><ResurrectionStone r={40} glow={0.6 - 0.3 * tip} id="rs-lg" /></g>
       </svg>
-      <Surface grainSeed={frame} vignette={0.7} />
-    </AbsoluteFill>
-  );
-};
-
-// A beat: Death bows its hood to look down at the pans.
-export const GLANCE_FRAMES = 22;
-export const DeathGlance: React.FC<{frame: number}> = ({frame}) => {
-  const s = frame / FPS;
-  const bow = interpolate(s, [0, 0.8], [0, 1], {...clamp, easing: ease});
-  return (
-    <AbsoluteFill style={{background: '#000'}}>
-      <Filters />
-      <Painted
-        renderKey={`dg-${frame}`}
-        flow="swirl"
-        before={(ctx, noise) => {
-          voidBackdrop(ctx, noise, s + 110);
-          ctx.save();
-          ctx.translate(960, 900);
-          ctx.rotate((-6 - 10 * bow) * (Math.PI / 180));
-          ctx.translate(-960, -900);
-          drawDeath(ctx, noise, {cx: 960, cy: 430 + 30 * bow, k: 1.25, t: s + 110, rim: '#7888aa', glowAmt: 0});
-          ctx.restore();
-        }}
-      />
       <Surface grainSeed={frame} vignette={0.7} />
     </AbsoluteFill>
   );

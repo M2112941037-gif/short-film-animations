@@ -18,8 +18,9 @@ import {ramp} from '../util';
 // `reveal` 0..1 brings up the carving and its gloss.
 export const SF03Gravestone: React.FC<{frame?: number; push?: number; flake?: number; reveal?: number}> = ({frame = 80, push = 0, flake = 1, reveal = 1}) => {
   const stone: [number, number] = [830, 1010];
-  const z = 1 + 0.95 * push;
-  const fx = 960 + (830 - 960) * push, fy = 540 + (700 - 540) * push;
+  // the push ends on the carving with its vertical gloss fully in frame
+  const z = 1 + 0.7 * push;
+  const fx = 960 + (880 - 960) * push, fy = 540 + (600 - 540) * push;
   const camT = `translate(${W / 2 - fx * z} ${H / 2 - fy * z}) scale(${z})`;
   const landY = stone[1] - 40 - 700 - 34;
   const flakePos: [number, number] = [stone[0] + 70 + Math.sin(flake * 6) * 18 * (1 - flake), -60 + (landY + 60) * flake];
