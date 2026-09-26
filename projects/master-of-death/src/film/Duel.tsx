@@ -192,7 +192,7 @@ export const WandCover: React.FC<{frame: number; pull?: number; stow?: number}> 
       under={
         <g transform={camT}>
           {/* Death at the far end, standing, the balance fading into its robe */}
-          {pull > 0 && <g transform="translate(960 562)"><DeathFar k={2.6} t={s + 3} front /></g>}
+          {pull > 0.3 && <g transform="translate(960 562)" opacity={interpolate(pull, [0.3, 0.8], [0, 1], clamp)}><DeathFar k={2.6} t={s + 3} front /></g>}
           <g transform="translate(870 712) rotate(-12)"><ElderWand len={180} snow={snow} /></g>
           {pull > 0 && (
             <g transform="translate(960 470)" opacity={1 - stow}>
