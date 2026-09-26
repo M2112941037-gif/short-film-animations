@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Easing, interpolate} from 'remotion';
 import {BoneHand} from '../characters/BoneHand';
-import {PEOPLE, Person} from '../characters/Person';
+import {HarryPaint} from '../characters/HarryPaint';
 import {Filters} from '../fx/Filters';
 import {Surface} from '../fx/Surface';
 import {noiseField, rampRGB} from '../paint/canvas';
@@ -22,8 +22,8 @@ export const Grab: React.FC<{frame: number}> = ({frame}) => {
   const lift = interpolate(s, [0.75, 1.7], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)});
   const reach = interpolate(s, [0.6, 1.0], [0, 1], {...clamp, easing: Easing.out(Easing.quad)});
   const up = -130 * lift;
-  const neck: [number, number] = [960, 640 + up];
-  const wrist: [number, number] = [neck[0] - 250 - 300 * (1 - come), neck[1] + 6 - 380 * (1 - come)];
+  const neck: [number, number] = [1034, 716 + up];
+  const wrist: [number, number] = [neck[0] - 330 - 300 * (1 - come), neck[1] - 30 - 380 * (1 - come)];
   return (
     <AbsoluteFill style={{background: '#000'}}>
       <Filters />
@@ -40,12 +40,20 @@ export const Grab: React.FC<{frame: number}> = ({frame}) => {
         }}
         under={
           <>
-            <g transform={`translate(960 ${1160 + up})`}>
-              <Person spec={PEOPLE.harry} k={6.5} id="harry-grab" reach={reach} />
+            <g transform={`translate(620 ${140 + up}) scale(1.8)`}><HarryPaint id="hp-grab" /></g>
+            <g transform={`translate(${wrist[0]} ${wrist[1]}) rotate(${10 - 4 * curl})`}>
+              <BoneHand k={2.5} curl={curl} spread={0.9} thumb={0.4 + curl * 0.5} hook={0.8} forearm={30} />
             </g>
-            <g transform={`translate(${wrist[0]} ${wrist[1]}) rotate(${8 - 4 * curl})`}>
-              <BoneHand k={1.7} curl={curl} spread={0.9} thumb={0.4 + curl * 0.5} hook={0.8} forearm={30} />
-            </g>
+            {[[-1, -110, 70], [1, 60, 60]].map(([side, dx, dy]) => {
+              const hx = neck[0] + (dx as number), hy = neck[1] + (dy as number) + (1 - reach) * 420;
+              return (
+                <g key={side} transform={`translate(${hx} ${hy}) rotate(${(side as number) * -18})`}>
+                  <path d="M-34,40 L-30,-10 Q-26,-40 -12,-46 L-10,-70 Q-6,-80 2,-70 L4,-48 L10,-76 Q16,-84 22,-74 L20,-44 L28,-62 Q36,-66 36,-54 L30,-20 Q34,10 26,40Z" fill="#d9b49b" />
+                  <path d="M6,-40 L20,-44 L28,-62 Q36,-66 36,-54 L30,-20 Q34,10 26,40 L4,40Z" fill="#9c7c78" opacity={0.7} />
+                  <path d="M-34,40 L26,40 L28,160 L-40,160Z" fill="#2a3550" />
+                </g>
+              );
+            })}
           </>
         }
       />

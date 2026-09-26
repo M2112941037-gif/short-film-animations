@@ -1,5 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, Easing, interpolate} from 'remotion';
+import {HarryPaint} from '../characters/HarryPaint';
 import {PEOPLE, Person} from '../characters/Person';
 import {Dabs} from '../fx/Dabs';
 import {Filters} from '../fx/Filters';
@@ -17,13 +18,13 @@ export const HARRYS_PAN_FRAMES = 120;
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 // order from the script: Lily, James, Cedric, Sirius, Dumbledore, Lupin, Tonks
 const CAST: {who: keyof typeof PEOPLE; x: number; y: number; k: number}[] = [
-  {who: 'lily', x: 700, y: 935, k: 4.4},
-  {who: 'james', x: 1230, y: 935, k: 4.4},
-  {who: 'cedric', x: 450, y: 935, k: 4.4},
-  {who: 'sirius', x: 1350, y: 880, k: 4.0},
-  {who: 'dumbledore', x: 570, y: 880, k: 4.0},
-  {who: 'lupin', x: 1590, y: 880, k: 4.0},
-  {who: 'tonks', x: 1470, y: 935, k: 4.4},
+  {who: 'lily', x: 560, y: 905, k: 3.5},
+  {who: 'james', x: 760, y: 905, k: 3.5},
+  {who: 'cedric', x: 350, y: 905, k: 3.5},
+  {who: 'sirius', x: 660, y: 850, k: 3.15},
+  {who: 'dumbledore', x: 450, y: 850, k: 3.15},
+  {who: 'lupin', x: 860, y: 850, k: 3.15},
+  {who: 'tonks', x: 940, y: 905, k: 3.5},
 ];
 const FIRST = 0.5;
 const STEP = 0.55;
@@ -34,8 +35,8 @@ export const HarrysPan: React.FC<{frame: number}> = ({frame}) => {
   // the pan climbs one notch after each departure
   const rise = CAST.reduce((acc, _, i) => acc + interpolate(s, [FIRST + i * STEP + 0.2, FIRST + i * STEP + 0.55], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)}), 0);
   const drop = rise * 95; // everything far away sinks as we rise
-  const z = interpolate(s, [0, 5], [1, 1.28], {...clamp, easing: Easing.inOut(Easing.quad)});
-  const cx = 960, cy = interpolate(s, [0, 5], [600, 690], clamp);
+  const z = interpolate(s, [0, 5], [1, 1.14], {...clamp, easing: Easing.inOut(Easing.quad)});
+  const cx = interpolate(s, [0, 5], [960, 1080], clamp), cy = interpolate(s, [0, 5], [560, 600], clamp);
   const camT = `translate(${W / 2 - cx * z} ${H / 2 - cy * z}) scale(${z})`;
   const skyAt = (u: number, v: number) => ramp([[0, '#151b28'], [0.5, '#34405a'], [0.85, '#4f5770'], [1, '#5b5566']], Math.min(1, v + drop / 2400));
   const rimY = 945;
@@ -97,14 +98,12 @@ export const HarrysPan: React.FC<{frame: number}> = ({frame}) => {
                 <Person spec={PEOPLE[p.who]} k={p.k} id={p.who} opacity={1 - gone(p.i)} />
               </g>
             ))}
-            <g transform="translate(960 948)">
-              <ellipse cx={0} cy={0} rx={50} ry={9} fill="#000" opacity={0.35} filter="url(#blur-3)" />
-              <Person spec={PEOPLE.harry} k={4.5} id="harry" />
-            </g>
 
             {/* front lip of the pan */}
             <path d={`M-200,${rimY} Q960,${rimY + 150} ${W + 200},${rimY} L${W + 200},${H + 400} L-200,${H + 400}Z`} fill="url(#hp-rim)" filter="url(#paint)" />
             <path d={`M-200,${rimY} Q960,${rimY + 150} ${W + 200},${rimY}`} fill="none" stroke="#f0cf8f" strokeWidth={3} opacity={0.7} filter="url(#rough-m)" />
+            {/* Harry, closest to us, watching them go */}
+            <g transform="translate(1000 150) scale(1.85)"><HarryPaint id="hp-pan" /></g>
           </g>
         }
       />

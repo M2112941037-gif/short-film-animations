@@ -30,7 +30,6 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
   const k = k0 * h;
   const bw = build;
   const hem = -46 + (1 - coatLen) * 0 - coatLen * 40; // y of the coat's hem
-  const shade = `${id}-shade`;
   const coatD = S([
     [-11 * bw, -79], [-4, -81.5], [4, -81.5], [11 * bw, -79], [13 * bw, -70], [12.5 * bw, -56], [13 * bw + coatLen * 4, hem],
     [2, hem + 1], [0, -56], [-2, hem + 1], [-13 * bw - coatLen * 4, hem], [-12.5 * bw, -56], [-13 * bw, -70],
@@ -43,17 +42,9 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
   const face = S([[0, -100], [6.3, -98], [7.6, -92], [6.8, -86], [4.4, -82], [0, -80.8], [-4.4, -82], [-6.8, -86], [-7.6, -92], [-6.3, -98]], k, 0.45);
   return (
     <g opacity={opacity}>
-      <defs>
-        {/* key light from upper left: every form turns darker toward the right */}
-        <linearGradient id={shade} x1="0" y1="0" x2="1" y2="0.15">
-          <stop offset="0" stopColor="#000" stopOpacity="0" />
-          <stop offset="0.5" stopColor="#000" stopOpacity="0.15" />
-          <stop offset="1" stopColor="#000" stopOpacity="0.6" />
-        </linearGradient>
-      </defs>
-      {hair.back && <path d={S(hair.back, k)} fill={hair.color} />}
+      {hair.back && <path d={S(hair.back, k)} fill={hair.color} transform={`translate(0 ${-80 * k}) scale(1.12) translate(0 ${80 * k})`} />}
       <path d={legsD} fill={legs} />
-      <path d={legsD} fill={`url(#${shade})`} />
+      <path d={S([[1.5, 0], [0.8, -30], [8 * bw, hem + 2], [7.6 * bw, 0]], k, 0.1)} fill="#000" opacity={0.32} />
       <path d={S([[-8 * bw, -1.5], [-1.2, -1.5], [-1.2, 0.8], [-8.6 * bw, 0.8]], k, 0.2)} fill="#0b0c0f" />
       <path d={S([[1.2, -1.5], [8 * bw, -1.5], [8.6 * bw, 0.8], [1.2, 0.8]], k, 0.2)} fill="#0b0c0f" />
       {[-1, 1].map((sx) => (
@@ -63,22 +54,24 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
       <path d={coatD} fill={coat} />
       {/* open front shows what's underneath */}
       <path d={S([[-3, -80], [3, -80], [2, hem + 2], [-2, hem + 2]], k, 0.2)} fill={under} opacity={0.9} />
-      <path d={coatD} fill={`url(#${shade})`} />
+      <path d={S([[4.5, -81], [11 * bw, -79], [13 * bw, -70], [12.5 * bw, -56], [13 * bw + coatLen * 4, hem], [3.5, hem + 1], [6, -60]], k, 0.2)} fill="#000" opacity={0.34} />
       {/* rim of key light along the left edge */}
       <path d={S([[-11 * bw, -79], [-13 * bw, -70], [-12.5 * bw, -56], [-13 * bw - coatLen * 4, hem], [-12 * bw - coatLen * 4, hem], [-11.6 * bw, -56], [-12 * bw, -70], [-10.4 * bw, -78.5]], k, 0.3)} fill={rim} opacity={0.5} />
 
+      <g transform={`translate(0 ${-80 * k}) scale(1.12) translate(0 ${80 * k})`}>
       {/* neck + head */}
       <path d={S([[-2.6, -82], [2.6, -82], [2.8, -78.5], [-2.8, -78.5]], k, 0.2)} fill={skin} />
       <path d={S([[-2.6, -82], [2.6, -82], [2.8, -78.5], [-2.8, -78.5]], k, 0.2)} fill="#000" opacity={0.3} />
       <path d={face} fill={skin} />
-      <path d={face} fill={`url(#${shade})`} />
+      <path d={S([[2.5, -100], [6.3, -98], [7.6, -92], [6.8, -86], [4.4, -82], [1.5, -81], [3.8, -88], [4.2, -94]], k, 0.35)} fill="#3a2a40" opacity={0.3} />
       <path d={S([[-7.4, -94], [-6.4, -86], [-4.6, -82.6], [-6, -85], [-7, -90]], k)} fill="#fff" opacity={0.18} />
       {/* features */}
       <path d={`M${-4.6 * k},${-93.6 * k} L${-1.4 * k},${-94 * k} M${1.4 * k},${-94 * k} L${4.6 * k},${-93.6 * k}`} stroke={hair.color} strokeWidth={0.7 * k} strokeLinecap="round" />
       {[-2.9, 2.9].map((x) => (
         <g key={x}>
-          <ellipse cx={x * k} cy={-91.6 * k} rx={1.3 * k} ry={0.75 * k} fill="#ece7df" />
-          <circle cx={x * k} cy={-91.6 * k} r={0.6 * k} fill={eyes} />
+          <ellipse cx={x * k} cy={-91.6 * k} rx={1.05 * k} ry={1.25 * k} fill={eyes} />
+          <ellipse cx={x * k} cy={-91.6 * k} rx={1.05 * k} ry={1.25 * k} fill="#000" opacity={0.45} />
+          <circle cx={(x - 0.35) * k} cy={-92.1 * k} r={0.35 * k} fill="#fff" />
         </g>
       ))}
       <path d={`M${0},${-91 * k} L${0.8 * k},${-87.3 * k} L${-0.6 * k},${-86.8 * k}`} fill="none" stroke="#6b4f44" strokeWidth={0.45 * k} opacity={0.8} />
@@ -101,6 +94,7 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
           <path d={`M${1 * k},${-91 * k} A${1.9 * k},${1.9 * k} 0 0 0 ${4.8 * k},${-91 * k} Z`} />
         </g>
       )}
+      </g>
       {/* scarf: house colours, the brightest thing on each of them */}
       {scarf && (
         <g>

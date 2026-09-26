@@ -45,7 +45,7 @@ const Head: React.FC<{which: keyof typeof HEADS; k: number; opacity: number}> = 
       <path d={`M${-6.5 * k},${-246 * k} L${-6 * k},${-232 * k} L${6 * k},${-232 * k} L${6.5 * k},${-246 * k}Z`} fill={h.shade} />
       <ellipse cx={-19 * k} cy={-272 * k} rx={2.6 * k} ry={5 * k} fill={h.shade} />
       <ellipse cx={19 * k} cy={-272 * k} rx={2.6 * k} ry={5 * k} fill={h.shade} />
-      <path d={face} fill={h.skin} stroke={INK} strokeWidth={1.4 * k} />
+      <path d={face} fill={h.skin} />
       {/* shaded side of the face */}
       <path d={smooth(sc([[5, -299], [15, -296], [19, -282], [18, -266], [14, -252], [6, -244], [3, -244], [9, -262], [10, -284]], k), true, 0.4)} fill={h.shade} opacity={0.7} />
       <path d={smooth(sc(h.hairPts as unknown as Pt[], k), true, 0.35)} fill={h.hair} />
@@ -107,8 +107,8 @@ export const Riddle: React.FC<{k?: number; rim?: string; wind?: number; eyeGlow?
       <path d={armL} fill="#07080b" />
       <path d={armR} fill="#07080b" />
       {/* fingers: a boy's hand, then long and chalk-white */}
-      <path d={smooth(handL)} fill={skinHand} stroke={INK} strokeWidth={1.4 * k} />
-      <path d={smooth(handR)} fill={skinHand} stroke={INK} strokeWidth={1.4 * k} />
+      <path d={smooth(handL)} fill={skinHand} />
+      <path d={smooth(handR)} fill={skinHand} />
       {[[-92, -112, -100, -94], [-88, -108, -92, -90], [-84, -112, -84, -96]].map(([x1, y1, x2, y2], i) => (
         <line key={i} x1={x1 * k} y1={y1 * k} x2={(x1 + (x2 - x1) * (0.6 + 0.13 * stage)) * k} y2={(y1 + (y2 - y1) * (0.6 + 0.13 * stage)) * k} stroke={skinHand} strokeWidth={2.2 * k} strokeLinecap="round" />
       ))}
@@ -120,7 +120,7 @@ export const Riddle: React.FC<{k?: number; rim?: string; wind?: number; eyeGlow?
         {snake > 0 && (
           <g opacity={snake}>
             <path d={`M${-7 * k},${-246 * k} L${-6 * k},${-232 * k} L${6 * k},${-232 * k} L${7 * k},${-246 * k}Z`} fill={SKIN_SHADE} />
-            <path d={head} fill={SKIN} stroke={INK} strokeWidth={1.6 * k} />
+            <path d={head} fill={SKIN} />
             <path d={smooth(sc([[4, -298], [15, -294], [20, -276], [17, -258], [10, -246], [2, -242], [8, -262], [9, -282]], k), true, 0.4)} fill={SKIN_SHADE} opacity={0.75} />
             {/* heavy brow shadow over the eyes */}
             <path d={`M${-17 * k},${-282 * k} Q0,${-277 * k} ${17 * k},${-282 * k} L${16 * k},${-270 * k} Q0,${-266 * k} ${-16 * k},${-270 * k}Z`} fill={SKIN_SHADE} opacity={0.7} />
