@@ -48,3 +48,8 @@ export const FONT = {
 export const W = 1920;
 export const H = 1080;
 export const FPS = 24;
+
+// Preview renders set REMOTION_RES=0.5: every canvas, rasterized layer and
+// brush works at that fraction of the pixels; layout stays in 1920×1080 units.
+export const RES = Number(process.env.REMOTION_RES) || 1;
+export const px = (n: number) => n * RES;

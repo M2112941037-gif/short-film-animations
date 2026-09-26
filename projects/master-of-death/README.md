@@ -16,16 +16,34 @@ Death's robe is not a fixed shape. Its tattered tongues and smoke are traced thr
 
 ```bash
 npm install
-npm run fonts      # re-subset fonts after changing any Chinese text in src/
-npm run stills     # render style frames to out/stills/
-npm run studio     # preview
+npm run fonts                                   # 改过中文字幕后重新生成字体子集
+npm run still -- SF01-Death out/stills/a.png    # 单帧（全分辨率）
+npm run preview -- Opening out/preview.mp4      # 预览视频（半分辨率，快约 4 倍）
+npm run render -- Opening out/final.mp4         # 终版视频（1080p）
 ```
 
-Renders go to `out/` (git-ignored) and are delivered in the chat. The repo holds code only.
+## 项目规矩
 
-## Design decisions (agreed with the director)
+**工作方式**
+- 全部在云端完成：云端写代码、云端渲染，视频直接发到对话窗口。
+- 仓库只放代码、剧本、参考图和字体。渲染结果放在 `out/`（不进仓库）。
+- 做完一个有意义的节点就发中间稿，导演可以随时插话。
+- 对话太长时开新会话接着做；本文件就是交接说明，新会话先读它。
 
-- **Red/green rim light belongs to SF01 only** (Death holding the balance, Voldemort green, Harry red). It was designed for that composition. Do not reuse it in other shots.
-- Death has no face. The hood holds only darkness.
-- No visible light sources or lens-flare hot spots. Light shows up as rims and rays whose origin is hidden.
-- Brushwork stays fine and layered, never blocky.
+**省 token / 渲染**
+- 渲染在后台跑，本身不耗 token。耗 token 的是：对话长度、写代码、看图。
+- 小改动（颜色、亮度、强弱）改完直接发，不自检。
+- 大改动只看一张缩小的关键帧拼图来拦明显错误；细节由导演判断。
+- 审看一律用半分辨率预览（`npm run preview`）；只有导演确认后才渲 1080p 终版。
+- 终版质量不打折扣。笔触每两帧更新一次（"一拍二"）可用于终版；导演若觉得影响观感，就改回逐帧。
+- 镜头静止时，背景等不动的层只算一次、缓存复用。
+
+**画面**
+- 红/绿轮廓光只属于 SF01（死神持秤：伏地魔绿、哈利红），是为这个构图专门设计的，别的镜头不用。
+- 死神无面，兜帽里只有深黑；压迫镜头时帽沿散出幽幽黑气。
+- 不出现可见的光源点或光斑；光以轮廓光、顶光的形式出现，光源藏在画外或物体背后。
+- 死神的光是头顶打下来的顶光，不是放射状的光。
+- 笔触细腻、层叠，不能像色块。
+- 哈利的特写和手要画成真实的人物（参考图右下角），不能是黑剪影。
+- 亡者是半透明、微微发光的形体，用特征认人，和主角的实心剪影区分开。
+- 暂时不加片头片尾。

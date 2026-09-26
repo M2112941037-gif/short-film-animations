@@ -10,7 +10,7 @@ import {drawDeath, drawSleeve} from '../paint/death';
 import {Painted} from '../paint/Painted';
 import {rasterize} from '../paint/rasterize';
 import {Scale} from '../props/Scale';
-import {C, H, W} from '../theme';
+import {C, H, px, RES, W} from '../theme';
 
 // A giant pan seen close: brass bowl at the bottom of frame, its chains
 // rising and dissolving into the dark — only the lower part is real.
@@ -67,7 +67,7 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number; cam?: Camera; p
   const camT = `translate(${tx} ${ty}) scale(${z})`;
   const withCam = (ctx: Ctx, fn: () => void) => {
     ctx.save();
-    ctx.setTransform(z, 0, 0, z, tx, ty);
+    ctx.transform(z, 0, 0, z, tx, ty);
     fn();
     ctx.restore();
   };
@@ -168,17 +168,42 @@ export const SF01Death: React.FC<{frame?: number; tilt?: number; cam?: Camera; p
       [<g transform={`translate(${bigL[0]} ${bigL[1]})`}><VoldemortSilhouette k={5.6} rim={RIM_V} rimW={1.3} body="#000000" /></g>, 1],
       [<g transform={`translate(${bigR[0]} ${bigR[1]}) scale(-1 1)`}><HarrySilhouette k={5.1} rim={RIM_H} rimW={1.3} body="#000000" /></g>, -1],
     ];
-    for (const [el, dir] of layers) {
+    for (const [i, [el, dir]] of layers.entries()) {
       const img = await rasterize(<g transform={camT}>{el}</g>);
+      // the glow breathes slowly, each figure on its own rhythm
+      const breath = 0.72 + 0.28 * Math.sin(t * 1.25 + i * 2.1);
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
-      // halo leans toward the light only, so the back edge stays dark
-      ctx.filter = 'blur(9px)';
-      ctx.globalAlpha = 0.35 * proj;
-      ctx.drawImage(img, dir * 5 * z, 0);
+      // wide spill leaning toward the light — the rim radiates, the back stays dim
+      ctx.filter = `blur(${px(28 * z)}px)`;
+      ctx.globalAlpha = 0.55 * breath * proj;
+      ctx.drawImage(img, dir * 14 * z, 0, W, H);
+      ctx.filter = `blur(${px(10 * z)}px)`;
+      ctx.globalAlpha = 0.45 * breath * proj;
+      ctx.drawImage(img, dir * 5 * z, 0, W, H);
+      // a band of brighter light travels up the rim, over and over
+      const feetY = ty + 1046 * z, headY = ty + 440 * z;
+      const phase = (t * 0.32 + i * 0.5) % 1;
+      const bandY = feetY + (headY - 160 * z - feetY) * phase;
+      const flow = document.createElement('canvas');
+      flow.width = ctx.canvas.width;
+      flow.height = ctx.canvas.height;
+      const fc = flow.getContext('2d')!;
+      fc.setTransform(RES, 0, 0, RES, 0, 0);
+      fc.drawImage(img, 0, 0, W, H);
+      fc.globalCompositeOperation = 'destination-in';
+      const band = fc.createLinearGradient(0, bandY + 200 * z, 0, bandY - 200 * z);
+      band.addColorStop(0, 'rgba(0,0,0,0)');
+      band.addColorStop(0.5, 'rgba(0,0,0,1)');
+      band.addColorStop(1, 'rgba(0,0,0,0)');
+      fc.fillStyle = band;
+      fc.fillRect(0, 0, W, H);
+      ctx.filter = `blur(${px(6 * z)}px)`;
+      ctx.globalAlpha = 0.7 * proj;
+      ctx.drawImage(flow, 0, 0, W, H);
       ctx.filter = 'none';
       ctx.globalAlpha = 0.45 * proj;
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, W, H);
       ctx.restore();
     }
   };

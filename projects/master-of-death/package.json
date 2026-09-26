@@ -6,7 +6,9 @@
   "scripts": {
     "studio": "remotion studio",
     "fonts": "node scripts/fetch-fonts.mjs",
-    "stills": "for id in SF01-Death SF02-SkullMountain SF03-Gravestone; do remotion still src/index.ts $id out/stills/$id.png --log=error; done",
+    "still": "remotion still src/index.ts --log=error",
+    "preview": "REMOTION_RES=0.5 remotion render src/index.ts --concurrency=4 --codec=h264 --crf=20 --log=error",
+    "render": "remotion render src/index.ts --concurrency=4 --codec=h264 --crf=18 --log=error",
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {

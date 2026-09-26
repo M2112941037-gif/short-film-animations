@@ -2,6 +2,7 @@
 // streams off it — long tattered cloth tongues lifted by a slow, curling
 // wind, thinning into smoke. Nothing about the silhouette is fixed: pass a
 // different `t` and the robe breathes.
+import {px} from '../theme';
 import {smooth} from '../util';
 import {Ctx, P, polyline, ribbon, rgba, resample, trace} from './canvas';
 import {mulberry, Noise} from './noise';
@@ -42,7 +43,7 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
 
   // smoke: soft, wide, translucent — the robe dissolving at its edges
   ctx.save();
-  ctx.filter = `blur(${12 * k}px)`;
+  ctx.filter = `blur(${px(12 * k)}px)`;
   for (let i = 0; i < 70; i++) {
     const e = edges[Math.floor(rand() * edges.length)];
     const pts = trace(e.p, e.out, 30, 16 * k, (p, s) => flow(p, s, e.out), 0.9);
@@ -65,7 +66,7 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
     ctx.fill();
     if (lit > 0) {
       ctx.save();
-      ctx.filter = `blur(${2.5 * k}px)`;
+      ctx.filter = `blur(${px(2.5 * k)}px)`;
       ctx.strokeStyle = rgba(rim, lit);
       ctx.lineWidth = 3 * k;
       polyline(ctx, L.slice(0, Math.floor(L.length * 0.55)));
@@ -122,14 +123,14 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
   ctx.clip(body);
   for (const f of folds) {
     const pts = f.pts.map(X);
-    ctx.filter = `blur(${14 * k}px)`;
+    ctx.filter = `blur(${px(14 * k)}px)`;
     ctx.strokeStyle = 'rgba(0,0,2,0.75)';
     ctx.lineWidth = 36 * k * f.w;
     ctx.stroke(path(smooth(pts, false)));
     // the ridge catches light unevenly: broken into lit stretches, brightest near the light
     const ridge = pts.map(([x, y]) => [x + f.ridge[0] * k * 1.6, y + f.ridge[1] * k * 1.6] as P);
     const samples = resample(ridge, 24);
-    ctx.filter = `blur(${5 * k}px)`;
+    ctx.filter = `blur(${px(5 * k)}px)`;
     ctx.lineCap = 'round';
     for (let i = 0; i < samples.length - 1; i++) {
       const on = noise.n3(i * 0.35, f.pts[0][0] * 0.01, 3) > -0.15;
@@ -159,7 +160,7 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
   ctx.restore();
   // rim only across hood and shoulders — below that the edge is torn cloth
   ctx.save();
-  ctx.filter = `blur(${2 * k}px)`;
+  ctx.filter = `blur(${px(2 * k)}px)`;
   ctx.strokeStyle = rgba(rim, 0.55);
   ctx.lineWidth = 4 * k;
   ctx.stroke(path(smooth([...left.slice(0, 7).reverse(), ...right.slice(1, 7)], false, 0.45)));
@@ -178,7 +179,7 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
   ctx.save();
   ctx.clip(opening);
   // faint cold haze at the inner edge so the void has depth, not a hole
-  ctx.filter = `blur(${16 * k}px)`;
+  ctx.filter = `blur(${px(16 * k)}px)`;
   ctx.strokeStyle = rgba('#26324a', 0.55);
   ctx.lineWidth = 26 * k;
   ctx.stroke(opening);
@@ -186,11 +187,11 @@ export const drawDeath = (ctx: Ctx, noise: Noise, o: DeathOpts) => {
   // the rolled hood lip: thick, lit along its outer curve, shadowed inside
   const lipAt = (sc: number) => (pts: P[]) => smooth(pts.map(([x, y]) => X([x * sc, y * sc + 4])), false);
   ctx.save();
-  ctx.filter = `blur(${6 * k}px)`;
+  ctx.filter = `blur(${px(6 * k)}px)`;
   ctx.strokeStyle = 'rgba(0,0,0,0.8)';
   ctx.lineWidth = 22 * k;
   ctx.stroke(path(smooth(openPts.map(([x, y]) => X([x * 1.1, y * 1.1 + 2])), true, 0.45)));
-  ctx.filter = `blur(${2 * k}px)`;
+  ctx.filter = `blur(${px(2 * k)}px)`;
   ctx.strokeStyle = rgba(rim, 0.65);
   ctx.lineWidth = 5 * k;
   ctx.stroke(path(lipAt(1.2)([...openPts.slice(7), openPts[0], openPts[1], openPts[2]])));
