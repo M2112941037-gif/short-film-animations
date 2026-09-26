@@ -28,23 +28,23 @@ export const GhostCrowd: React.FC<{o: number}> = ({o}) => (
 // 00:31–00:37. He reaches; the Snitch opens; the stone inside begins to
 // glow, and in its light Lily is there — and the others, blurred, around.
 // His face catches the warm light; his eyes open to it.
-// Harry's reaching arm, from his shoulder into the cuff of the painted hand:
-// a little soft (it is nearer than his face) and casting a soft shadow.
+// Harry's reaching forearm: it rises into frame from below (the elbow is
+// off the bottom edge), straight in line with the wrist, in his coat's
+// shadowed navy so it reads as part of him; a soft shadow falls on his chest.
+const SLEEVE = '#232c44';
 const Arm: React.FC<{wx: number; wy: number; rot: number}> = ({wx, wy, rot}) => {
   const r = (rot * Math.PI) / 180, k = 1.45;
   const c: [number, number] = [wx + k * (80 * Math.cos(r) + 2 * Math.sin(r)), wy + k * (-80 * Math.sin(r) + 2 * Math.cos(r))];
-  // shoulder → cuff, nearly straight, sagging a little at the elbow
-  const sh: [number, number] = [1130, 935];
-  const e: [number, number] = [(c[0] + sh[0]) / 2 + 10, (c[1] + sh[1]) / 2 + 42];
-  const d0 = `M${c[0]},${c[1]} Q${e[0]},${e[1]} ${sh[0]},${sh[1]}`;
+  const d: [number, number] = [Math.cos(r), -Math.sin(r)]; // from the wrist back toward the elbow
+  const n: [number, number] = [-d[1], d[0]];
+  const far: [number, number] = [c[0] + d[0] * 520, c[1] + d[1] * 520];
+  const quad = (w0: number, w1: number, off = 0) =>
+    `M${c[0] + n[0] * (w0 + off)},${c[1] + n[1] * (w0 + off)} L${far[0] + n[0] * (w1 + off)},${far[1] + n[1] * (w1 + off)} L${far[0] - n[0] * (w1 - off)},${far[1] - n[1] * (w1 - off)} L${c[0] - n[0] * (w0 - off)},${c[1] - n[1] * (w0 - off)}Z`;
   return (
     <g>
-      <path d={d0} transform="translate(26 34)" stroke="#000" strokeOpacity={0.4} strokeWidth={130} fill="none" strokeLinecap="round" filter="url(#blur-24)" />
-      <g filter="url(#blur-1.5)">
-        <path d={d0} stroke="#2a3550" strokeWidth={118} fill="none" strokeLinecap="round" />
-        <path d={d0} transform="translate(8 22)" stroke="#1a2034" strokeWidth={62} fill="none" strokeLinecap="round" />
-        <path d={d0} transform="translate(-6 -38)" stroke="#3a4a72" strokeWidth={22} fill="none" strokeLinecap="round" opacity={0.8} />
-      </g>
+      <path d={quad(66, 80)} transform="translate(30 30)" fill="#000" opacity={0.35} filter="url(#blur-24)" />
+      <path d={quad(61, 72)} fill={SLEEVE} />
+      <path d={quad(24, 30, 36)} fill="#161c2d" opacity={0.8} />
     </g>
   );
 };
@@ -76,9 +76,9 @@ export const StoneReveal: React.FC<{frame: number}> = ({frame}) => {
             <g transform="translate(1000 150) scale(1.85)">
               <HarryPaint id="hp-sr" look={-6} brow={0.6 - 0.45 * glow} lid={0} warm={glow} />
             </g>
-            <Arm wx={wx} wy={wy} rot={-28 + 14 * reach2} />
-            <g transform={`translate(${wx} ${wy}) scale(-1 1) rotate(${-28 + 14 * reach2})`}>
-              <Hand k={1.45} curl={0.25 - 0.2 * reach2} id="hand-sr" />
+            <Arm wx={wx} wy={wy} rot={-50 + 10 * reach2} />
+            <g transform={`translate(${wx} ${wy}) scale(-1 1) rotate(${-50 + 10 * reach2})`}>
+              <Hand k={1.45} curl={0.25 - 0.2 * reach2} sleeve={SLEEVE} id="hand-sr" />
             </g>
           </>
         }
