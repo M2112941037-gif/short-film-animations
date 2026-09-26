@@ -58,7 +58,8 @@ export const SkullPile: React.FC<{
   px: number; py: number; baseY: number; spread: number; count: number;
   seed?: string; rim?: string; top?: string; bottom?: string; kTop?: number; kBottom?: number;
   growth?: number; // 0..1: how much of the pile exists (it grows bottom-up)
-}> = ({px, py, baseY, spread, count, seed = 'pile', rim = C.snow, top = '#7c8292', bottom = '#1c2029', kTop = 0.32, kBottom = 0.95, growth = 1}) => {
+  fallBand?: number; // skulls within this band above the growth front are still falling in
+}> = ({px, py, baseY, spread, count, seed = 'pile', rim = C.snow, top = '#7c8292', bottom = '#1c2029', kTop = 0.32, kBottom = 0.95, growth = 1, fallBand = 0}) => {
   const halfAt = (v: number) => spread * Math.pow(v, 0.8);
   const skulls = useMemo(() => {
     const r = rng(seed);
@@ -110,10 +111,15 @@ export const SkullPile: React.FC<{
 
   return (
     <g filter="url(#rough-s)">
-      <path d={mound} fill="#0a0c11" />
-      {items.filter((it) => it.v >= cut).map((it, i) => (
-        <React.Fragment key={i}>{it.el}</React.Fragment>
-      ))}
+      <clipPath id={`grown-${seed}`}>
+        <rect x={px - spread * 1.2} y={py + cut * (baseY - py) + 20} width={spread * 2.4} height={baseY - py + 200} />
+      </clipPath>
+      <path d={mound} fill="#0a0c11" clipPath={`url(#grown-${seed})`} />
+      {items.filter((it) => it.v >= cut).map((it, i) => {
+        const p = fallBand > 0 ? (it.v - cut) / fallBand : 1;
+        const dy = p < 1 ? -Math.pow(1 - p, 2) * 1100 : 0;
+        return dy ? <g key={i} transform={`translate(0 ${dy})`}>{it.el}</g> : <React.Fragment key={i}>{it.el}</React.Fragment>;
+      })}
     </g>
   );
 };
