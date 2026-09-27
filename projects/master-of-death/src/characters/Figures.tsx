@@ -159,9 +159,10 @@ export const PanCrowd: React.FC<{k?: number; others?: number; color?: string; ri
 };
 
 // Death far off: a tall, narrow hooded robe, the hem and a few torn strands
-// trailing in the wind. `front` shows the empty hood (no face, ever).
+// trailing in the wind (`flow` −1 blows them to the left). `front` shows
+// the empty hood (no face, ever).
 // Origin at the feet; 100 × k px.
-export const DeathFar: React.FC<{k?: number; t?: number; rim?: string; front?: boolean}> = ({k = 1, t = 0, rim = '#9aa8c4', front = false}) => {
+export const DeathFar: React.FC<{k?: number; t?: number; rim?: string; front?: boolean; flow?: 1 | -1}> = ({k = 1, t = 0, rim = '#9aa8c4', front = false, flow = 1}) => {
   const sw = Math.sin(t * Math.PI * 1.5);
   const hem = Array.from({length: 9}, (_, i) => {
     const u = i / 8;
@@ -174,18 +175,23 @@ export const DeathFar: React.FC<{k?: number; t?: number; rim?: string; front?: b
   return (
     <g transform={`rotate(${1.2 * sw} 0 0)`}>
       <path d={body} fill="#07080b" />
-      {[0, 1, 2, 3].map((i) => (
-        <path
-          key={i}
-          d={`M${(14 - i * 2) * k},${(-60 + i * 14) * k} q${(10 + 3 * Math.sin(t * 4 + i)) * k},${(3 + 2 * Math.sin(t * 3 + i)) * k} ${(22 + 4 * Math.sin(t * 5 + i * 2)) * k},${(1 + 3 * Math.sin(t * 6 + i)) * k}`}
-          stroke="#07080b"
-          strokeWidth={(2.4 - i * 0.4) * k}
-          fill="none"
-          strokeLinecap="round"
-          opacity={0.8}
-        />
-      ))}
+      <g transform={`scale(${flow} 1)`}>
+      {[0, 1, 2, 3].map((i) => {
+        // a torn strand of the robe: wide at the root, tapering as it trails
+        const rx = (13 - i * 2) * k, ry = (-60 + i * 14) * k;
+        const L = (20 + 4 * Math.sin(t * 5 + i * 2)) * k;
+        const tip = [rx + L, ry + (1 + 3 * Math.sin(t * 6 + i)) * k];
+        const mid = [rx + L * 0.5, ry + (3 + 2 * Math.sin(t * 3 + i)) * k];
+        const w = (2.8 - 0.5 * i) * k;
+        return <path key={i} d={`M${rx},${ry - w} Q${mid[0]},${mid[1] - w * 0.6} ${tip[0]},${tip[1]} Q${mid[0]},${mid[1] + w * 0.6} ${rx},${ry + w}Z`} fill="#07080b" opacity={0.85} />;
+      })}
+      </g>
       <path d={`M${-8 * k},${-88 * k} C${-12 * k},${-84 * k} ${-12 * k},${-76 * k} ${-12 * k},${-70 * k} C${-13 * k},${-50 * k} ${-15 * k},${-22 * k} ${-16 * k},${-4 * k}`} stroke={rim} strokeWidth={0.9 * k} fill="none" opacity={0.35} />
+      {/* the fall of the cloth: long folds, and the hood's edge */}
+      {[-7, -2, 4, 9].map((x, i) => (
+        <path key={i} d={`M${x * k},${-72 * k} Q${(x + 1.5 * sw) * k},${-40 * k} ${(x * 1.3 + 2 * sw) * k},${-4 * k}`} stroke={i % 2 ? '#1b2130' : '#010102'} strokeWidth={(i % 2 ? 1.6 : 2.2) * k} fill="none" opacity={0.9} />
+      ))}
+      {!front && <path d={`M${-9 * k},${-86 * k} Q0,${-80 * k} ${9 * k},${-86 * k} M0,${-99 * k} Q${1 * k},${-92 * k} 0,${-82 * k}`} stroke="#2a3244" strokeWidth={0.9 * k} fill="none" opacity={0.8} />}
       {front && (
         <g>
           <ellipse cx={0} cy={-89 * k} rx={5.2 * k} ry={7.4 * k} fill="#2a3040" opacity={0.7} />

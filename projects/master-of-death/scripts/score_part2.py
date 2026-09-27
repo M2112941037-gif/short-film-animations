@@ -163,4 +163,9 @@ for i, tilt_click in enumerate([0.3, 0.75, 1.15]):
 for i, m in enumerate([38, 45, 50, 57, 62]):                          # an open, even chord: D A D A D
     add(chime(note(m + 12), 4.0), LEVEL + 0.4 + i * 0.05, -0.4 + 0.2 * i, 0.12)
 
+# ——— the snow comes in across the screen (into Part 3) ———————————————————————
+END2 = (STARTS[-1] + LENS[-1]) / FPS
+add(whoosh(1.1, 400, 5000), END2 - 0.9, -0.3, 0.35)
+add(sparkle(0.9, 50, 2600, 6400), END2 - 0.8, -0.2, 0.5)
+
 mix.master('part2')

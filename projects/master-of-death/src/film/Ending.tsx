@@ -52,7 +52,7 @@ export const FinalBalance: React.FC<{frame: number}> = ({frame}) => {
   );
 };
 
-// Black. Footsteps (in the score). The sign of the Hallows draws itself, then
+// Black. A little music (in the score). The sign of the Hallows draws itself, then
 // gives way to the last line.
 export const ENDCARD_FRAMES = 150;
 export const EndCard: React.FC<{frame: number}> = ({frame}) => {

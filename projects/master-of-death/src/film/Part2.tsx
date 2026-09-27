@@ -9,6 +9,7 @@ import {SnitchChase, SNITCH_FRAMES} from './SnitchChase';
 import {REVEAL_FRAMES, StoneReveal} from './StoneReveal';
 import {FLAKE_FRAMES, FlakeThrough, Touch, TOUCH_FRAMES} from './Touch';
 import {VoldemortClose} from './VoldemortClose';
+import {SnowWipeRun} from '../fx/SnowWipe';
 import {SF03Gravestone} from '../styleframes/SF03Gravestone';
 
 // Part 2 (00:28–01:00): the Snitch, the stone, Lily, the snow, the grave,
@@ -46,6 +47,7 @@ const SHOTS: Spec[] = [
 ];
 
 const starts = SHOTS.reduce<number[]>((acc, sh, i) => [...acc, i === 0 ? 0 : acc[i - 1] + SHOTS[i - 1].len - X], []);
+export const WIPE = 20;
 export const PART2_FRAMES = starts[starts.length - 1] + SHOTS[SHOTS.length - 1].len;
 
 export const Part2: React.FC = () => (
@@ -56,6 +58,10 @@ export const Part2: React.FC = () => (
         <Shot len={sh.len} enter={sh.enter ?? ['fade', X]}>{sh.render}</Shot>
       </Sequence>
     ))}
+    {/* the snow comes in across the level balance and buries it — Part 3 uncovers */}
+    <Sequence from={PART2_FRAMES - WIPE} durationInFrames={WIPE}>
+      <SnowWipeRun from={0} to={1} len={WIPE} />
+    </Sequence>
   </AbsoluteFill>
 );
 

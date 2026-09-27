@@ -8,11 +8,11 @@ import numpy as np
 from synth import *  # noqa: F401,F403 — instruments, filters, Mix
 
 FPS = 24
-LENS = [60, 36, 38, 30, 44, 60, 42, 72, 72, 40, 72, 48, 84, 96, 150]   # shot lengths, as in Part3.tsx
+LENS = [60, 36, 38, 30, 44, 60, 42, 60, 72, 60, 38, 132, 64, 96, 150]   # shot lengths, as in Part3.tsx
 STARTS = [0]
 for n in LENS[:-1]:
     STARTS.append(STARTS[-1] + n - 8)
-(FACEOFF, BOOTS, HWALK, HEM, POV_V, CLASH, WANDFALL, COVER, REVEAL, FACE, APPROACH, FINGERS, WALK, BALANCE, END) = [f / FPS for f in STARTS]
+(FACEOFF, BOOTS, HWALK, HEM, POV_V, CLASH, WANDFALL, COVER, REVEAL, OVER, CALM, PASS, WALK, BALANCE, END) = [f / FPS for f in STARTS]
 DUR = (STARTS[-1] + LENS[-1]) / FPS + 0.3
 STEP = 16                                    # frames per step (src/characters/gait.ts)
 mix = Mix(DUR)
@@ -53,6 +53,24 @@ def beam(f0, d, bright):
     return lp(x, bright) * np.linspace(0.2, 1, len(t)) * (0.8 + 0.2 * np.sin(2 * np.pi * 13 * t))
 
 
+def crackle():
+    """One snap of spell-electricity."""
+    t = t_(0.04)
+    return bp(rng.standard_normal(len(t)), 2000, 9500) * np.exp(-t * 180)
+
+
+def harp(f, d=2.4):
+    """A plucked harp string (Karplus–Strong), softened."""
+    n, N = int(SR * d), max(2, int(SR / f))
+    buf = rng.uniform(-1, 1, N)
+    out = np.empty(n)
+    for i in range(n):
+        j = i % N
+        out[i] = buf[j]
+        buf[j] = 0.4985 * (buf[j] + buf[(j + 1) % N])
+    return lp(out, 3500) * env(n, 0.004, 0.3)
+
+
 def swish(d=0.8):
     """Cloth sweeping past."""
     t = t_(d)
@@ -78,6 +96,8 @@ add(beam(note(57), 1.6, 2400), CLASH + 0.5, 0.6, 0.30)                  # red, b
 t = t_(1.3)
 add(bp(rng.standard_normal(len(t)), 200, 6000) * np.linspace(0.3, 1, len(t)) ** 2, CLASH + 0.85, 0, 0.45)   # the clash
 add(thump(1.2, 80, 30), CLASH + 0.85, 0, 0.5)
+for i in range(90):                                                    # the beams spit and crackle
+    add(crackle(), CLASH + 0.55 + rng.uniform(0, 1.55), rng.uniform(-0.6, 0.6), rng.uniform(0.15, 0.45))
 t = t_(0.5)
 add(rng.standard_normal(len(t)) * np.linspace(0, 1, len(t)) ** 3, CLASH + 1.95, 0, 0.35)  # into the white…
 t = t_(0.12)
@@ -93,24 +113,38 @@ add(strings(note(74), REVEAL - COVER + 1, 2600), COVER, 0, 0.05)
 add(drone(note(26), 3.5, 180), REVEAL + 0.4, 0, 0.25)                  # Death, who saw it all
 add(tink(1700, 0.8), REVEAL + 2.2, 0, 0.14)                             # the balance put away
 
-# ——— Death steps aside ————————————————————————————————————————————————
-add(strings(note(50), 4.0, 900), FACE, -0.1, 0.18)                      # unafraid
-add(strings(note(57), 3.0, 1200), APPROACH, 0.1, 0.10)
-add(swish(1.1), APPROACH + 2.0, -0.6, 0.35)
-add(swish(0.9), FINGERS + 0.2, 0.3, 0.25)
-add(chime(note(81), 3), FINGERS + 0.8, 0.2, 0.08)
-steps(WALK, range(0, 84, STEP), 0.35)                                   # on, toward us
+# ——— toward each other; Death steps aside ————————————————————————————————
+steps(OVER, range(0, 60, STEP), 0.28)                                  # walking away from us
+add(strings(note(57), 3.0, 1200), OVER, 0.1, 0.10)
+steps(CALM, [(n * np.pi - 0.3) / (np.pi / STEP) - 6 for n in (1, 2)], 0.35)
+add(strings(note(50), 2.2, 900), CALM, -0.1, 0.18)                    # unafraid
+for f in range(0, 132, STEP):                                          # he comes on toward us
+    add(crunch(), PASS + f / FPS, -0.05, 0.18 + 0.3 * f / 132)
+add(swish(1.1), PASS + 0.55 * 5.5, 0.5, 0.3)                           # Death drifts aside
+add(swish(1.2), PASS + 0.7 * 5.5, 0.2, 0.3)                            # the robe over his shoulder, arm…
+add(chime(note(81), 3), PASS + 0.84 * 5.5, 0.1, 0.08)                  # …fingertips
+steps(WALK, range(0, 64, STEP), 0.35)                                   # on, toward us
 for i, m in enumerate([50, 54, 57, 62]):                                # warm strings under the quote
-    add(strings(note(m), BALANCE - FINGERS + 1.2, 1300), FINGERS + 0.4 + i * 0.3, -0.3 + 0.2 * i, 0.10)
+    add(strings(note(m), BALANCE - PASS - 0.2, 1300), PASS + 1.2 + i * 0.3, -0.3 + 0.2 * i, 0.10)
 
 # ——— the empty balance; white; black; footsteps; the Hallows; the last line ———
 for i in range(6):
     add(tink(rng.uniform(2400, 3600), 0.7), BALANCE + 0.3 + i * 0.4, rng.uniform(-0.3, 0.3), 0.08)
 t = t_(1.2)
 add(bp(rng.standard_normal(len(t)), 4000, 9000) * np.linspace(0, 1, len(t)) ** 2, BALANCE + 2.9, 0, 0.18)   # to white
-steps(END + 0.25, range(0, 58, 19), 0.45)                              # 一步。又一步。
-add(sum(chime(note(m), 3.5) for m in (74, 81, 86)) / 3, END + 1.1, 0, 0.14)   # the sign appears
-for i, m in enumerate([38, 45, 50, 54, 57, 62]):                        # D A D F# A D — the last line
-    add(strings(note(m), 2.6, 1400), END + 3.9 + i * 0.04, -0.4 + 0.16 * i, 0.10)
+# the Hallows: a short piece of music — harp, a celesta line in D with a
+# lydian G♯ for the magic, Lily's four rising notes folded in, home to D
+for i, m in enumerate([50, 57, 62, 66, 69, 74]):
+    add(harp(note(m)), END + 0.8 + i * 0.12, -0.5 + 0.2 * i, 0.16)
+for i, m in enumerate([55, 62, 67, 71, 74]):
+    add(harp(note(m)), END + 3.9 + i * 0.12, -0.4 + 0.2 * i, 0.14)
+for i, m in enumerate([50, 57, 62, 69, 74]):
+    add(harp(note(m), 2.0), END + 5.3 + i * 0.07, -0.4 + 0.2 * i, 0.14)
+for at, m, d in [(1.1, 81, 1.2), (1.6, 78, 1.0), (2.0, 80, 1.0), (2.4, 81, 1.2), (2.9, 86, 1.8), (3.6, 85, 1.0),
+                 (3.9, 83, 1.2), (4.4, 81, 0.9), (4.7, 78, 0.9), (5.0, 76, 1.0), (5.3, 74, 1.6)]:
+    add(chime(note(m), d * 2), END + at, 0.1, 0.11)
+for chord, at, d in [([50, 57, 62, 66], 0.8, 3.3), ([55, 62, 67, 71], 3.9, 1.6), ([50, 57, 62, 66], 5.3, 1.3)]:
+    for i, m in enumerate(chord):
+        add(strings(note(m), d, 1300), END + at, -0.3 + 0.2 * i, 0.06)
 
 mix.master('part3')

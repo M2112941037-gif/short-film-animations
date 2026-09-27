@@ -101,15 +101,19 @@ export const ElderWand: React.FC<{len?: number; snow?: number}> = ({len = 360, s
     bot.push([u * len, w(u) / 2]);
   }
   const body = smooth([...top, [len + 3, 0], ...bot.reverse()], true, 0.3);
+  const hidden = Math.min(1, Math.max(0, (snow - 0.7) / 0.3)); // fully buried: nothing shows
   return (
     <g>
+      <g opacity={1 - hidden}>
       <path d={body} fill="#3a2a1f" />
       <path d={smooth(top.map(([x, y]) => [x, y + 1.6] as Pt).concat([[len, 0]]), false)} fill="none" stroke="#8a6a4e" strokeWidth={1.6} opacity={0.7} />
       {nodes.map((n) => <ellipse key={n} cx={n * len} cy={0} rx={4} ry={w(n) / 2 + 0.5} fill="#2a1d15" />)}
+      </g>
       {snow > 0 && (
         <g>
           <path d={smooth([...top.map(([x, y]) => [x, y - 0.5] as Pt), ...top.slice().reverse().map(([x, y], i) => [x, y - 2 - snow * (7 + 3 * Math.sin(i * 0.9))] as Pt)], true, 0.3)} fill="#f4f7fb" opacity={Math.min(1, snow * 1.5)} />
-          <path d={`M-20,8 Q${len / 2},${-6 - 26 * snow} ${len + 30},8 Z`} fill="#eef2f8" opacity={Math.max(0, snow - 0.35) * 1.5} />
+          <path d={`M-30,12 Q${len / 2},${-10 - 26 * snow} ${len + 40},12 Q${len / 2},${20} -30,12 Z`} fill="#eef2f8" opacity={Math.min(1, Math.max(0, snow - 0.35) * 1.8)} />
+          <path d={`M-10,14 Q${len / 2},${22} ${len + 20},14`} stroke="#aab5ca" strokeWidth={3} fill="none" opacity={hidden * 0.6} filter="url(#blur-3)" />
         </g>
       )}
     </g>

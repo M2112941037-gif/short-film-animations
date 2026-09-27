@@ -27,9 +27,10 @@ const S = (pts: Pt[], k: number, tension = 0.35) => smooth(pts.map(([x, y]) => [
 
 // `reach` 0..1 brings both hands up to the throat; `haze` 0..1 sinks the
 // figure back into the air (atmospheric depth for the back row).
-// `walk` (radians, stride phase) walks toward the camera; `wand` 0..1 raises
+// `walk` (radians, stride phase) walks toward the camera (away, with `back`:
+// the figure seen from behind, no face); `wand` 0..1 raises
 // the right hand with a wand.
-export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity?: number; rim?: string; reach?: number; haze?: number; walk?: number; wand?: number}> = ({spec, k: k0 = 3, id, opacity = 1, rim = '#c7d2e6', reach = 0, haze = 0, walk, wand = 0}) => {
+export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity?: number; rim?: string; reach?: number; haze?: number; walk?: number; wand?: number; back?: boolean}> = ({spec, k: k0 = 3, id, opacity = 1, rim = '#c7d2e6', reach = 0, haze = 0, walk, wand = 0, back = false}) => {
   const {h = 1, build = 1, coat, coatLen = 0.4, under = '#2a2f3a', legs = '#1c212b', skin = '#dcc0aa', hair, beard, glasses, eyes = '#2a2622', scarf, scars} = spec;
   const k = k0 * h;
   const bw = build;
@@ -44,7 +45,8 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
   const fs = walk === undefined ? null : [foot(walk, 0), foot(walk, 1)];
   const bd = walk === undefined ? {bob: 0.5, sway: 0} : body(walk);
   const bx = bd.sway * 0.7, by = (0.5 - bd.bob) * 1.4;
-  const fy = (i: 0 | 1) => (fs ? fs[i].a * 1.8 - fs[i].lift * 3 : 0);
+  // seen from behind, the foot ahead is the one further from us: higher up
+  const fy = (i: 0 | 1) => (fs ? (back ? -1 : 1) * fs[i].a * 1.8 - fs[i].lift * 3 : 0);
   const [liftL, liftR] = [fy(0), fy(1)];
   const legD = (sx: number, y: number) =>
     S([[sx * 8 * bw + bx, hem - 3 + by], [sx * 7.6 * bw + bx * 0.3, y], [sx * 1.3 + bx * 0.3, y], [sx * 0.6 + bx, -30 + by]], k, 0.12);
@@ -100,7 +102,7 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
       <path d={smooth(arm(1).map(([x, y]) => [x * k, y * k] as Pt), false)} fill="none" stroke="#000" strokeOpacity={0.35} strokeWidth={5.2 * k * bw} strokeLinecap="round" />
       {lit(coatD, coat)}
       {/* open front shows what's underneath */}
-      <path d={S([[-3, -80], [3, -80], [2, hem + 2], [-2, hem + 2]], k, 0.2)} fill={under} opacity={0.9} />
+      {!back && <path d={S([[-3, -80], [3, -80], [2, hem + 2], [-2, hem + 2]], k, 0.2)} fill={under} opacity={0.9} />}
       <path d={S([[4.5, -81], [11 * bw, -79], [13 * bw, -70], [12.5 * bw, -56], [13 * bw + coatLen * 4, hem], [3.5, hem + 1], [6, -60]], k, 0.2)} fill="#000" opacity={0.34} />
       {/* rim of key light along the left edge */}
       <path d={S([[-11 * bw, -79], [-13 * bw, -70], [-12.5 * bw, -56], [-13 * bw - coatLen * 4, hem], [-12 * bw - coatLen * 4, hem], [-11.6 * bw, -56], [-12 * bw, -70], [-10.4 * bw, -78.5]], k, 0.3)} fill={rim} opacity={0.5} />
@@ -109,9 +111,10 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
       {/* neck + head */}
       <path d={S([[-2.6, -82], [2.6, -82], [2.8, -78.5], [-2.8, -78.5]], k, 0.2)} fill={skin} />
       <path d={S([[-2.6, -82], [2.6, -82], [2.8, -78.5], [-2.8, -78.5]], k, 0.2)} fill="#000" opacity={0.3} />
-      {lit(face, skin)}
+      {lit(face, back ? hair.color : skin)}
       <path d={S([[2.5, -100], [6.3, -98], [7.6, -92], [6.8, -86], [4.4, -82], [1.5, -81], [3.8, -88], [4.2, -94]], k, 0.35)} fill="#3a2a40" opacity={0.3} />
       <path d={S([[-7.4, -94], [-6.4, -86], [-4.6, -82.6], [-6, -85], [-7, -90]], k)} fill="#fff" opacity={0.18} />
+      {!back && <>
       {/* features */}
       <path d={`M${-4.6 * k},${-93.6 * k} L${-1.4 * k},${-94 * k} M${1.4 * k},${-94 * k} L${4.6 * k},${-93.6 * k}`} stroke={hair.color} strokeWidth={0.7 * k} strokeLinecap="round" />
       {[-2.9, 2.9].map((x) => (
@@ -126,10 +129,11 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
       <ellipse cx={-3.4 * k} cy={-87.6 * k} rx={1.4 * k} ry={0.8 * k} fill="#e59a7f" opacity={0.18} />
       {scars && <path d={`M${-4.6 * k},${-90 * k} L${-1.6 * k},${-86.5 * k} M${2.6 * k},${-96.5 * k} L${5 * k},${-93 * k}`} stroke="#9b7468" strokeWidth={0.35 * k} />}
       {beard && <path d={S(beard.pts, k)} fill={beard.color} />}
+      </>}
       <path d={S(hair.front, k)} fill={hair.color} />
       <path d={`M${-7.2 * k},${-92 * k} Q${-7.6 * k},${-99 * k} ${-2 * k},${-102.6 * k}`} fill="none" stroke={rim} strokeWidth={0.7 * k} opacity={0.45} strokeLinecap="round" />
       {/* glasses catch the light */}
-      {glasses === 'round' && (
+      {!back && glasses === 'round' && (
         <g fill="none" stroke="#0c0c0e" strokeWidth={0.45 * k}>
           <circle cx={-2.9 * k} cy={-91.6 * k} r={1.95 * k} />
           <circle cx={2.9 * k} cy={-91.6 * k} r={1.95 * k} />
@@ -137,7 +141,7 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
           <path d={`M${-4.2 * k},${-93 * k} A${1.95 * k},${1.95 * k} 0 0 1 ${-2.2 * k},${-93.5 * k}`} stroke="#eef2f8" strokeWidth={0.35 * k} />
         </g>
       )}
-      {glasses === 'halfmoon' && (
+      {!back && glasses === 'halfmoon' && (
         <g fill="none" stroke="#b9a36a" strokeWidth={0.4 * k}>
           <path d={`M${-4.8 * k},${-91 * k} A${1.9 * k},${1.9 * k} 0 0 0 ${-1 * k},${-91 * k} Z`} />
           <path d={`M${1 * k},${-91 * k} A${1.9 * k},${1.9 * k} 0 0 0 ${4.8 * k},${-91 * k} Z`} />
@@ -148,11 +152,11 @@ export const Person: React.FC<{spec: PersonSpec; k?: number; id: string; opacity
       {scarf && (
         <g>
           <path d={S([[-5, -82.5], [5, -82.5], [5.5, -78], [-5.5, -78]], k, 0.2)} fill={scarf[0]} />
-          <path d={S([[1.5, -79], [4.8, -79], [5.5, -62], [2.3, -62]], k, 0.2)} fill={scarf[0]} />
-          {[-73, -69, -65].map((y) => (
+          {!back && <path d={S([[1.5, -79], [4.8, -79], [5.5, -62], [2.3, -62]], k, 0.2)} fill={scarf[0]} />}
+          {!back && [-73, -69, -65].map((y) => (
             <line key={y} x1={2 * k} y1={y * k} x2={5.2 * k} y2={y * k} stroke={scarf[1]} strokeWidth={0.9 * k} />
           ))}
-          <path d={S([[1.5, -79], [4.8, -79], [5.5, -62], [2.3, -62]], k, 0.2)} fill="#000" opacity={0.25} />
+          {!back && <path d={S([[1.5, -79], [4.8, -79], [5.5, -62], [2.3, -62]], k, 0.2)} fill="#000" opacity={0.25} />}
         </g>
       )}
       {wand > 0 && <line x1={hand(-1)[0] * k} y1={hand(-1)[1] * k} x2={(hand(-1)[0] - 13 * wand) * k} y2={(hand(-1)[1] - 12 * wand) * k} stroke="#3a2a1e" strokeWidth={0.9 * k} strokeLinecap="round" />}

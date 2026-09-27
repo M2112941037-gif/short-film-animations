@@ -1,5 +1,5 @@
 import React from 'react';
-import {VoldemortSilhouette} from '../characters/Figures';
+import {DeathFar, VoldemortSilhouette} from '../characters/Figures';
 import {body, foot, RATE, STANCE, STEP} from '../characters/gait';
 import {HarryPaint} from '../characters/HarryPaint';
 import {ribbon, rgba, trace, type Ctx, type P} from '../paint/canvas';
@@ -269,7 +269,9 @@ const farDrifts = (ctx: Ctx, noise: Noise, f: number, v: number, horizon: number
   ctx.restore();
 };
 
-export const HarryWalks: React.FC<{frame: number}> = ({frame}) => {
+// `calm`: later, walking toward Death — unafraid, the faintest ease in his face;
+// Death, not Voldemort, far off on the horizon.
+export const HarryWalks: React.FC<{frame: number; calm?: boolean}> = ({frame, calm = false}) => {
   const phi = PHI_W + frame * RATE;
   const {bob, sway} = body(phi);
   const z = 1.55;
@@ -288,9 +290,15 @@ export const HarryWalks: React.FC<{frame: number}> = ({frame}) => {
       }}
       under={
         <>
-          <g transform={`translate(330 ${672 - frame * 0.1})`}><VoldemortSilhouette k={0.42 + frame * 0.002} rim={RIM} /></g>
+          {calm ? (
+            <g transform={`translate(330 ${664 - frame * 0.1})`}><DeathFar k={0.55 + frame * 0.003} t={frame / FPS} front /></g>
+          ) : (
+            <g transform={`translate(330 ${672 - frame * 0.1})`}><VoldemortSilhouette k={0.42 + frame * 0.002} rim={RIM} /></g>
+          )}
           <g transform={`translate(${x} ${y}) scale(${z}) rotate(${roll} 200 460)`}>
-            <HarryPaint id="hw-harry" shine={frame / FPS} look={-3} brow={0.4} lid={0.2} smile={0} />
+            {calm
+              ? <HarryPaint id="hw-harry-c" shine={frame / FPS} look={-3} brow={0.9} lid={0.14} smile={0.12} />
+              : <HarryPaint id="hw-harry" shine={frame / FPS} look={-3} brow={0.4} lid={0.2} smile={0} />}
           </g>
         </>
       }
