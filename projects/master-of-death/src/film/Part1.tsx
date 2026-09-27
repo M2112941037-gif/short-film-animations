@@ -105,8 +105,8 @@ export const Part1: React.FC = () => (
     <Sequence from={84} durationInFrames={80}>
       <Sub line={NARRATION.weighs} len={80} />
     </Sequence>
-    <Sequence from={T.pan + 24} durationInFrames={84}>
-      <Sub line={NARRATION.faced} len={84} />
+    <Sequence from={T.pan + 12} durationInFrames={76}>
+      <Sub line={NARRATION.faced} len={76} />
     </Sequence>
     <Sequence from={T.skull + 82} durationInFrames={62}>
       <Sub line={NARRATION.feared} len={62} />

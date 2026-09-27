@@ -7,13 +7,13 @@ import numpy as np
 
 from synth import *  # noqa: F401,F403 — instruments, filters, Mix
 
-DUR = 684 / 24 + 0.35
+DUR = 650 / 24 + 0.35
 mix = Mix(DUR)
 add = mix.add
 
 # shot boundaries (seconds), from the Part 1 timeline at 24 fps
-SKULL, PAN, LOOMS, GRAB, LOOKS = 172 / 24, 400 / 24, 510 / 24, 572 / 24, 610 / 24
-BAL1, BAL2 = 322 / 24, 636 / 24   # the two balance cutaways
+SKULL, PAN, LOOMS, GRAB, LOOKS = 172 / 24, 400 / 24, 476 / 24, 538 / 24, 576 / 24
+BAL1, BAL2 = 322 / 24, 602 / 24   # the two balance cutaways
 
 # ——— the score ————————————————————————————————————————————————————
 # 0–7 s · the hand, the balance, the pull-back
@@ -49,7 +49,7 @@ add(whoosh(0.7, 400, 3000), PAN - 0.35, 0.6, 0.22)         # pan across to Harry
 # 16.7–21.2 s · Harry's pan: a bell for each of them, each one lower
 add(drone(note(62), LOOMS - PAN + 0.5, 1400, 0.002), PAN, 0, 0.05)  # thin high pad, D4
 for i, m in enumerate([81, 79, 77, 76, 74, 72, 69]):       # A5 G5 F5 E5 D5 C5 A4
-    at = PAN + 0.5 + i * 0.55
+    at = PAN + 0.5 + i * 0.34
     add(chime(note(m), 2.8), at, rng.uniform(-0.4, 0.4), 0.13)
     add(tink(900 - i * 40, 0.6) * 0.6, at + 0.3, 0, 0.08)  # the chain taking up slack
 

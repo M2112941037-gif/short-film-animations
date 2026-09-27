@@ -7,7 +7,7 @@ import {Shot} from './Part1';
 import {SKULL_FRAMES, SkullMountain} from './SkullMountain';
 import {SnitchChase, SNITCH_FRAMES} from './SnitchChase';
 import {REVEAL_FRAMES, StoneReveal} from './StoneReveal';
-import {FLAKE_FRAMES, FlakeThrough, Touch, TOUCH_FRAMES} from './Touch';
+import {FLAKE_FRAMES, FLAKE_STONE_FRAMES, FlakeOnStone, FlakeThrough, Touch, TOUCH_FRAMES} from './Touch';
 import {VoldemortClose} from './VoldemortClose';
 import {SnowWipeRun} from '../fx/SnowWipe';
 import {SF03Gravestone} from '../styleframes/SF03Gravestone';
@@ -28,8 +28,10 @@ const SHOTS: Spec[] = [
   // he freezes: the longing in his eyes stops short
   {len: 36, render: (f) => <HarryFace frame={f} eyes expr={{look: interpolate(f, [0, 20], [-4, 0], clamp), brow: interpolate(f, [0, 16], [0.4, 0.95], clamp), warm: 0.8}} />},
   // the grave: a flake lands on the stone and stays; the carving comes up
+  // one flake lands on the stone — and stays
+  {len: FLAKE_STONE_FRAMES, render: (f) => <FlakeOnStone frame={f} />},
   // (a slow push, then a long hold so the carving and its gloss can be read)
-  {len: 108, render: (f) => <SF03Gravestone frame={f + 200} push={interpolate(f, [0, 60], [0, 1], {...clamp, easing: Easing.inOut(Easing.quad)})} flake={interpolate(f, [0, 30], [0, 1], {...clamp, easing: Easing.out(Easing.quad)})} reveal={interpolate(f, [34, 62], [0, 1], clamp)} />},
+  {len: 108, render: (f) => <SF03Gravestone frame={f + 200} push={interpolate(f, [0, 60], [0, 1], {...clamp, easing: Easing.inOut(Easing.quad)})} flake={1} reveal={interpolate(f, [34, 62], [0, 1], clamp)} />},
   // back to his eyes: the wanting softens into understanding
   {len: 40, render: (f) => <HarryFace frame={f + 40} eyes expr={{look: -2, brow: interpolate(f, [0, 36], [0.9, 0.35], clamp), lid: interpolate(f, [8, 38], [0, 0.35], clamp), warm: 0.75}} />},
   {len: UNDERSTAND_FRAMES, render: (f) => <Understand frame={f} />},

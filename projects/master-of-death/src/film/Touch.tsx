@@ -6,7 +6,8 @@ import {Snow} from '../fx/Snow';
 import {Surface} from '../fx/Surface';
 import {Painted} from '../paint/Painted';
 import {FPS, H, W} from '../theme';
-import {voidBackdrop} from './backdrop';
+import {snowfield, voidBackdrop} from './backdrop';
+import {Gravestone} from '../props/Gravestone';
 import {Flake} from '../fx/Flake';
 
 // 00:37–00:40. Two hands, closer and closer — a finger's breadth apart. Framed
@@ -72,6 +73,38 @@ export const FlakeThrough: React.FC<{frame: number}> = ({frame}) => {
       </svg>
       <Snow frame={frame + 700} layer="far" count={40} seed="fl" wind={0.1} speed={0.5} color="#f2e6d4" opacity={0.5} />
       <Surface grainSeed={frame} vignette={0.72} />
+    </AbsoluteFill>
+  );
+};
+
+// 00:44 — the answer to the flake that fell through her: close on the top of
+// the gravestone, one flake drifts down onto the stone — and stays there,
+// catching the light. The carved names below say whose stone it is.
+export const FLAKE_STONE_FRAMES = 60;
+const LAND = [1040, 232];
+export const FLAKE_STONE_LAND = 30; // (for the soundtrack)
+export const FlakeOnStone: React.FC<{frame: number}> = ({frame}) => {
+  const s = frame / FPS;
+  const land = FLAKE_STONE_LAND;
+  const y = frame < land ? interpolate(frame, [0, land], [-120, LAND[1]], {...clamp, easing: Easing.out(Easing.quad)}) : LAND[1] + 3 * Math.exp(-(frame - land) / 3) * Math.sin((frame - land) * 1.4);
+  const x = frame < land ? LAND[0] + Math.sin(s * 2) * 30 * (1 - frame / land) : LAND[0];
+  const glint = interpolate(frame, [land + 4, land + 12, land + 24], [0, 1, 0.35], clamp);
+  return (
+    <AbsoluteFill style={{background: '#000'}}>
+      <Filters />
+      <Painted
+        renderKey={`fs-${frame}`}
+        before={(ctx, noise) => snowfield(ctx, noise, s + 30, 900)}
+        under={<g transform="translate(960 1740) scale(2.2)"><Gravestone k={1} snowCap={0.35} /></g>}
+      />
+      <svg width={W} height={H} style={{position: 'absolute'}}>
+        <g transform={`translate(${x} ${y})`}>
+          {glint > 0 && <circle r={120} fill="#fff6e6" opacity={0.25 * glint} filter="url(#blur-24)" />}
+          <Flake r={80} rot={frame < land ? s * 40 : land / FPS * 40} />
+        </g>
+      </svg>
+      <Snow frame={frame + 900} layer="far" count={60} seed="fs" wind={0.1} speed={0.5} opacity={0.5} />
+      <Surface grainSeed={frame} vignette={0.7} />
     </AbsoluteFill>
   );
 };

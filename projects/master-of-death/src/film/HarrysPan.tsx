@@ -13,7 +13,7 @@ import {ramp} from '../util';
 // 00:17–00:21. Harry's side. The people he loves stand with him on the pan;
 // one by one they are simply gone. Each time, the pan lifts a little — he
 // gets lighter, lonelier — and Voldemort's pan sinks away below.
-export const HARRYS_PAN_FRAMES = 120;
+export const HARRYS_PAN_FRAMES = 86;
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 // order from the script: Lily, James, Cedric, Sirius, Dumbledore, Lupin, Tonks
@@ -27,7 +27,7 @@ const CAST: {who: keyof typeof PEOPLE; x: number; y: number; k: number}[] = [
   {who: 'tonks', x: 940, y: 905, k: 3.5},
 ];
 const FIRST = 0.5;
-const STEP = 0.55;
+const STEP = 0.34; // one after another, quickly
 
 export const HarrysPan: React.FC<{frame: number}> = ({frame}) => {
   const s = frame / FPS;

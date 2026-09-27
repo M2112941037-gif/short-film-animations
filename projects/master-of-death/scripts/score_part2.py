@@ -8,11 +8,11 @@ import numpy as np
 from synth import *  # noqa: F401,F403 — instruments, filters, Mix
 
 FPS = 24
-LENS = [72, 144, 60, 64, 36, 108, 40, 96, 60, 40, 30, 48, 30, 96, 48]   # shot lengths, as in Part2.tsx
+LENS = [72, 144, 60, 64, 36, 60, 108, 40, 96, 60, 40, 30, 48, 30, 96, 48]   # shot lengths, as in Part2.tsx
 STARTS = [0]
 for n in LENS[:-1]:
     STARTS.append(STARTS[-1] + n - 8)
-(SNITCH, REVEAL, TOUCH, FLAKE, EYES1, GRAVE, EYES2, UNDERSTAND, LETGO,
+(SNITCH, REVEAL, TOUCH, FLAKE, EYES1, STONE, GRAVE, EYES2, UNDERSTAND, LETGO,
  TIP, SHOCK, MELT_STONE, SMIRK, COLLAPSE, LEVEL) = [f / FPS for f in STARTS]
 DUR = (STARTS[-1] + LENS[-1]) / FPS + 0.35
 FLAKE_IN = 24 / FPS                          # the flake enters her hand (Touch.tsx FLAKE_PASS)
@@ -112,9 +112,9 @@ for i in range(2):
     add(s * 0.7, EYES1 + 0.2 + i * 0.9 + gap, 0, 0.25)
 
 # ——— the grave ——————————————————————————————————————————————————————
-for at, m in [(GRAVE + 0.1, 50), (GRAVE + 1.5, 45)]:
+for at, m in [(STONE + 0.1, 50), (GRAVE + 0.4, 45)]:
     add(chime(note(m), 4.5), at, 0, 0.28)                             # a far bell
-add(tink(2900, 0.8), GRAVE + 1.25, 0.1, 0.25)                         # the flake lands, and stays
+add(tink(2900, 1.6), STONE + 30 / FPS, 0.1, 0.3)                       # the flake lands, and stays
 
 # ——— understanding; she goes back into light ————————————————————————————
 add(pad([50, 57, 62, 66], LETGO - EYES2 + 0.5, 1000), EYES2, 0, 0.24)
