@@ -22,6 +22,11 @@ npm run preview -- Opening out/preview.mp4      # 预览视频（半分辨率，
 npm run render -- Opening out/final.mp4         # 终版视频（1080p）
 ```
 
+**成片**：`npm run audio` 后，分别 `npm run render -- PartN out/partN-full.mp4`（N=1,2,3，全分辨率每段约 1.3 小时），
+再用 `npx remotion ffmpeg -f concat -safe 0 -i list.txt -c copy out/master-of-death.mp4` 拼接（第二段结尾和第三段开头的雪花转场正好接上）。
+对话窗口单个文件上限 30 MB：发送前用两遍 x264（视频约 2200k，音频 aac 128k）压到 30 MB 以内。
+当前成片：约 101 秒（1920×1080，24fps），导演已确认三段预览。
+
 ## 项目规矩
 
 **工作方式**
